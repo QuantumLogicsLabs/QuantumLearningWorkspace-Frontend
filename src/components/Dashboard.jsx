@@ -1414,6 +1414,7 @@ function ScopeDropdown({ targetDocument, setTargetDocument, files }) {
         type="button"
         className="scope-dropdown-trigger"
         onClick={() => setIsOpen(!isOpen)}
+        title={selectedLabel}
       >
         <span className="scope-dropdown-label">{selectedLabel}</span>
         <ChevronDown size={14} className={`scope-dropdown-arrow ${isOpen ? "open" : ""}`} />
@@ -1453,6 +1454,7 @@ function ScopeDropdown({ targetDocument, setTargetDocument, files }) {
                     setIsOpen(false);
                   }
                 }}
+                title={file.filename}
               >
                 <span className="scope-doc-name">{file.filename}</span>
                 <span className="scope-doc-badge">

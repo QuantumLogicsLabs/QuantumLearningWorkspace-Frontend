@@ -2168,6 +2168,30 @@
     flex-shrink: 0;
   }
 
+  .custom-scope-dropdown {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .scope-dropdown-trigger {
+    width: 100%;
+    max-width: 100%;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    gap: 8px;
+  }
+
+  .scope-dropdown-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+    min-width: 250px;
+    max-width: calc(100vw - 32px);
+    max-height: 180px;
+    z-index: 1050;
+  }
+
   .chat-doc-select {
     flex: 1;
     min-width: 0;
