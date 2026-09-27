@@ -2205,13 +2205,37 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 8px;
+  }
+
+  .chat-status-info {
+    font-size: 0.8rem;
+  }
+
+  .btn-delete-doc-chat {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    gap: 5px;
+    white-space: nowrap;
+    border-radius: 6px;
+  }
+
+  .target-doc-banner {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    word-break: break-word;
+    border-left: 3px solid var(--color-primary-purple, #7c3aed);
+    background: rgba(124, 58, 237, 0.08);
   }
 
   .msg-bubble {
-    max-width: 88%;
-    padding: 12px 14px;
+    max-width: 90%;
+    padding: 11px 13px;
+    font-size: 0.88rem;
+    line-height: 1.45;
   }
 
   .chat-input-bar {
