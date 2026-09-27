@@ -1414,6 +1414,7 @@ function ScopeDropdown({ targetDocument, setTargetDocument, files }) {
         type="button"
         className="scope-dropdown-trigger"
         onClick={() => setIsOpen(!isOpen)}
+        title={selectedLabel}
       >
         <span className="scope-dropdown-label">{selectedLabel}</span>
         <ChevronDown size={14} className={`scope-dropdown-arrow ${isOpen ? "open" : ""}`} />
@@ -1453,6 +1454,7 @@ function ScopeDropdown({ targetDocument, setTargetDocument, files }) {
                     setIsOpen(false);
                   }
                 }}
+                title={file.filename}
               >
                 <span className="scope-doc-name">{file.filename}</span>
                 <span className="scope-doc-badge">
@@ -1935,8 +1937,8 @@ function ChatView({ targetDocument, setTargetDocument }) {
           onKeyDown={handleKeyDown}
           placeholder={
             selectedDocName
-              ? `Ask a question about ${selectedDocName}...`
-              : "Ask a question about your documents... (Press Enter to send)"
+              ? `Ask about "${selectedDocName.length > 20 ? selectedDocName.slice(0, 18) + '...' : selectedDocName}"...`
+              : "Ask a question about your documents..."
           }
           className="chat-text-input"
           disabled={isLoading}

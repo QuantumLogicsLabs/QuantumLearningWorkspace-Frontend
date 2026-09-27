@@ -1968,8 +1968,8 @@
     flex-direction: row;
     width: 100%;
     min-width: 100%;
-    height: 58px;
-    padding: 0 8px;
+    height: 56px;
+    padding: 0 6px;
     justify-content: space-between;
     align-items: center;
     border-right: none;
@@ -1979,6 +1979,7 @@
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar-nav::-webkit-scrollbar {
@@ -1991,37 +1992,54 @@
 
   .sidebar-nav-items {
     flex-direction: row;
-    gap: 6px;
+    gap: 3px;
     margin-top: 0;
     align-items: center;
+    flex: 1;
+    justify-content: space-around;
   }
 
   .sidebar-bottom {
     flex-direction: row;
     margin-top: 0;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
-    margin-left: 4px;
+    margin-left: 2px;
     padding-left: 4px;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .nav-btn {
-    width: 36px;
-    height: 36px;
     flex-shrink: 0;
   }
 
+  .nav-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .nav-btn:active {
+    transform: scale(0.92);
+  }
+
+  .nav-btn.active {
+    background: rgba(124, 58, 237, 0.18);
+  }
+
   .user-avatar-circle {
-    width: 30px;
-    height: 30px;
-    font-size: 0.78rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
     flex-shrink: 0;
   }
 
   .logout-icon-btn {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     padding: 4px;
     flex-shrink: 0;
   }
@@ -2031,12 +2049,13 @@
   }
 
   .nav-indicator {
-    left: auto;
-    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 2px;
     top: auto;
-    width: 18px;
+    width: 14px;
     height: 3px;
-    border-radius: 3px 3px 0 0;
+    border-radius: 3px;
   }
 
   .top-bar {
@@ -2168,6 +2187,30 @@
     flex-shrink: 0;
   }
 
+  .custom-scope-dropdown {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .scope-dropdown-trigger {
+    width: 100%;
+    max-width: 100%;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    gap: 8px;
+  }
+
+  .scope-dropdown-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+    min-width: 250px;
+    max-width: calc(100vw - 32px);
+    max-height: 180px;
+    z-index: 1050;
+  }
+
   .chat-doc-select {
     flex: 1;
     min-width: 0;
@@ -2181,28 +2224,70 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .msg-bubble {
-    max-width: 88%;
-    padding: 12px 14px;
-  }
-
-  .chat-input-bar {
-    padding: 10px 14px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     gap: 8px;
   }
 
+  .chat-status-info {
+    font-size: 0.8rem;
+  }
+
+  .btn-delete-doc-chat {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    gap: 5px;
+    white-space: nowrap;
+    border-radius: 6px;
+  }
+
+  .target-doc-banner {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    word-break: break-word;
+    border-left: 3px solid var(--color-primary-purple, #7c3aed);
+    background: rgba(124, 58, 237, 0.08);
+  }
+
+  .msg-bubble {
+    max-width: 90%;
+    padding: 11px 13px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .chat-input-bar {
+    padding: 10px 12px;
+    gap: 8px;
+    background: #0f0d22;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   .chat-text-input {
-    padding: 10px 14px;
+    padding: 10px 12px;
     font-size: 0.85rem;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .chat-text-input::placeholder {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--color-text-muted, #71717a);
   }
 
   .btn-send-chat {
     width: 38px;
     height: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
   }
 }
 
