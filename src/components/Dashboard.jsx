@@ -1937,8 +1937,8 @@ function ChatView({ targetDocument, setTargetDocument }) {
           onKeyDown={handleKeyDown}
           placeholder={
             selectedDocName
-              ? `Ask a question about ${selectedDocName}...`
-              : "Ask a question about your documents... (Press Enter to send)"
+              ? `Ask about "${selectedDocName.length > 20 ? selectedDocName.slice(0, 18) + '...' : selectedDocName}"...`
+              : "Ask a question about your documents..."
           }
           className="chat-text-input"
           disabled={isLoading}
