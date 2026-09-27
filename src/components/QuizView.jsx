@@ -1,5 +1,5 @@
-﻿import { useState, useEffect } from "react";
-import { FileEdit, Target, CheckCircle2, MessageSquare, AlertTriangle, Circle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileEdit, Target, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Circle } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import SourceSelector from "./SourceSelector.jsx";
@@ -26,6 +26,7 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
   // Quiz Display State
   const [quizId, setQuizId] = useState(initialContext?.quizId || "");
   const [questions, setQuestions] = useState(initialContext?.questions || []);
+  const [quizAnswers, setQuizAnswers] = useState([]);
   const [userAnswers, setUserAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -111,6 +112,7 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
 
       setQuizId(data.quiz_id || "");
       setQuestions(data.questions || []);
+      setQuizAnswers(data.answers || []);
       setUserAnswers({});
 
       try {
@@ -183,17 +185,21 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
       }
 
       const gradedData = await response.json();
-      const scoreMsg = gradedData.score !== undefined
-        ? `Quiz submitted! Score: ${gradedData.score}/${gradedData.total} (${gradedData.percentage}%)`
-        : "Quiz submitted successfully!";
+      const score = gradedData.score !== undefined ? gradedData.score : 0;
+      const total = gradedData.total !== undefined ? gradedData.total : questions.length;
+      const percentage = gradedData.percentage !== undefined
+        ? gradedData.percentage
+        : total > 0 ? Math.round((score / total) * 100) : 0;
 
+      const scoreMsg = `Quiz submitted! Overall Score: ${score}/${total} (${percentage}%)`;
       showToast(scoreMsg, "success");
 
       setQuizResult({
-        score: gradedData.score,
-        total: gradedData.total,
-        percentage: gradedData.percentage,
+        score,
+        total,
+        percentage,
         topic: topic,
+        gradedQuestions: gradedData.questions || gradedData.results || null,
       });
     } catch (err) {
       const errorMsg = err.message || "Failed to submit quiz";
@@ -239,6 +245,7 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
     setQuestionCount(5);
     setQuizId("");
     setQuestions([]);
+    setQuizAnswers([]);
     setUserAnswers({});
   };
 
@@ -247,12 +254,19 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
     return (
       <div className="quiz-view">
         <div className="quiz-request-card quiz-completion-card">
-          <CheckCircle2 size={40} className="quiz-completion-icon" />
+          <CheckCircle2 size={44} className="quiz-completion-icon" />
           <h2>Quiz Submitted!</h2>
-          <p className="quiz-completion-score">
-            You scored <strong>{quizResult.score}/{quizResult.total}</strong> ({quizResult.percentage}%) on{" "}
-            <strong>{quizResult.topic}</strong>
+          <p className="quiz-completion-subtitle">
+            Review your results for <strong>{quizResult.topic}</strong>
           </p>
+
+          <div className="quiz-overall-score-pill">
+            <span className="overall-score-tag-label">Overall Score:</span>
+            <strong className="overall-score-tag-value">
+              {quizResult.score}/{quizResult.total} ({quizResult.percentage}%)
+            </strong>
+          </div>
+
           <div className="quiz-completion-actions">
             <button
               type="button"
@@ -277,6 +291,90 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
             </button>
           </div>
         </div>
+
+        {/* Detailed Question Breakdown */}
+        {questions.length > 0 && (
+          <div className="quiz-completion-review-card">
+            <div className="details-header-row">
+              <h3 className="details-section-title">Question Breakdown</h3>
+              <span className="overall-score-summary">
+                Overall Score: <strong>{quizResult.score}/{quizResult.total} ({quizResult.percentage}%)</strong>
+              </span>
+            </div>
+
+            <div className="questions-review-list">
+              {questions.map((question, idx) => {
+                const qId = question.question_id;
+                const userAnswer = userAnswers[qId] || "No answer provided";
+                const gradedItem = quizResult.gradedQuestions?.find(
+                  (g) => g.question_id === qId || g.id === qId
+                );
+                const answerItem = quizAnswers.find((a) => a.question_id === qId);
+                const correctAnswer =
+                  gradedItem?.correct_answer ||
+                  answerItem?.answer ||
+                  question.correct_answer ||
+                  question.answer ||
+                  "—";
+                const explanation =
+                  gradedItem?.explanation ||
+                  answerItem?.explanation ||
+                  question.explanation ||
+                  null;
+
+                const isCorrect =
+                  gradedItem?.is_correct !== undefined
+                    ? Boolean(gradedItem.is_correct)
+                    : userAnswer.trim().toLowerCase() === String(correctAnswer).trim().toLowerCase();
+
+                return (
+                  <div
+                    key={qId || idx}
+                    className={`question-review-card ${isCorrect ? "card-correct" : "card-incorrect"}`}
+                  >
+                    <div className="question-review-header">
+                      <span className="question-number">Question {idx + 1}</span>
+                      <span className={`quiz-badge ${isCorrect ? "badge-correct" : "badge-incorrect"}`}>
+                        {isCorrect ? (
+                          <>
+                            <CheckCircle2 size={13} className="badge-icon" />
+                            <span>✓ Correct</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle size={13} className="badge-icon" />
+                            <span>✗ Incorrect</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    <p className="question-statement">{question.question}</p>
+
+                    <div className="answer-comparison-grid">
+                      <div className={`answer-box user-answer-box ${isCorrect ? "is-correct" : "is-incorrect"}`}>
+                        <span className="answer-box-label">Your Answer:</span>
+                        <span className="answer-box-text">{userAnswer}</span>
+                      </div>
+
+                      <div className="answer-box correct-answer-box">
+                        <span className="answer-box-label">Correct Answer:</span>
+                        <span className="answer-box-text">{correctAnswer}</span>
+                      </div>
+                    </div>
+
+                    {explanation && (
+                      <div className="question-explanation-box">
+                        <span className="explanation-label">💡 Explanation:</span>
+                        <p className="explanation-text">{explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -390,6 +488,7 @@ export default function QuizView({ initialContext, onLaunchRoadmap }) {
           className="btn-back-quiz"
           onClick={() => {
             setQuestions([]);
+            setQuizAnswers([]);
             setQuizId("");
             setUserAnswers({});
             setTopic("");

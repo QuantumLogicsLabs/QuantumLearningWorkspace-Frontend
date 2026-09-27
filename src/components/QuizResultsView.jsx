@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart3, AlertTriangle, Target, TrendingUp, CheckCircle2, XCircle, Map } from "lucide-react";
+import { BarChart3, AlertTriangle, Target, TrendingUp, CheckCircle2, XCircle, Map as MapIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./QuizResultsView.css";
@@ -35,7 +35,10 @@ export default function QuizResultsView({ onLaunchRoadmap }) {
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          setResults(data);
+          const valid = data.filter(
+            (r) => r && (r.topic || r.question || r.selected_answer || r.question_id)
+          );
+          setResults(valid);
         }
       })
       .catch((err) => {
@@ -47,51 +50,116 @@ export default function QuizResultsView({ onLaunchRoadmap }) {
       });
   }, [token]);
 
-  // Calculate statistics
+  // Format date safely
+  const formatQuizDate = (dateStr) => {
+    if (!dateStr) return "Date unavailable";
+    try {
+      const parsed = new Date(
+        !dateStr.endsWith("Z") && !dateStr.includes("+") ? dateStr + "Z" : dateStr
+      );
+      if (isNaN(parsed.getTime())) return "Date unavailable";
+      return parsed.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "Date unavailable";
+    }
+  };
+
+  // Group individual question results into cohesive quiz attempts
+  const groupResultsIntoQuizzes = (items) => {
+    if (!Array.isArray(items) || items.length === 0) return [];
+
+    const valid = items.filter(
+      (r) => r && (r.topic || r.question || r.selected_answer || r.question_id)
+    );
+
+    // Sort newest first
+    const sorted = [...valid].sort((a, b) => {
+      const tA = a.date_taken ? new Date(a.date_taken).getTime() : 0;
+      const tB = b.date_taken ? new Date(b.date_taken).getTime() : 0;
+      return tB - tA;
+    });
+
+    const groups = [];
+
+    for (const item of sorted) {
+      const rawTopic = (item.topic || "General").trim();
+      const itemTimestamp = item.date_taken ? new Date(item.date_taken).getTime() : 0;
+
+      // Grouping logic:
+      // 1. If item has quiz_id, group by exact quiz_id
+      // 2. Otherwise group by same topic (case-insensitive) taken within 5 minutes of each other
+      let target = null;
+      if (item.quiz_id) {
+        target = groups.find((g) => g.quiz_id && g.quiz_id === item.quiz_id);
+      }
+
+      if (!target && itemTimestamp) {
+        target = groups.find((g) => {
+          if (g.topic.toLowerCase() !== rawTopic.toLowerCase()) return false;
+          return Math.abs(g.timestamp - itemTimestamp) <= 300000;
+        });
+      }
+
+      if (target) {
+        target.questions.push(item);
+      } else {
+        const id = item.quiz_id || `${rawTopic.toLowerCase()}-${itemTimestamp || Date.now()}-${groups.length}`;
+        groups.push({
+          id,
+          quiz_id: item.quiz_id || null,
+          topic: rawTopic,
+          date: item.date_taken,
+          timestamp: itemTimestamp,
+          questions: [item],
+        });
+      }
+    }
+
+    return groups;
+  };
+
+  const allQuizGroups = groupResultsIntoQuizzes(results);
+
+  // Filter groups by topic
+  const filteredQuizGroups = filterTopic === "All"
+    ? allQuizGroups
+    : allQuizGroups.filter((g) => g.topic.toLowerCase() === filterTopic.toLowerCase());
+
+  // Calculate statistics based on grouped quizzes & total questions
   const calculateStats = () => {
-    if (results.length === 0) return { totalQuizzes: 0, avgScore: 0, totalQuestions: 0, correctAnswers: 0 };
+    if (results.length === 0) {
+      return { totalQuizzes: 0, avgScore: 0, totalQuestions: 0, correctAnswers: 0 };
+    }
 
     const totalQuestions = results.length;
     const correctAnswers = results.filter((r) => r.is_correct).length;
     const avgScore = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
-    // Count unique quiz attempts (by date and topic combination)
-    const uniqueQuizzes = new Set(
-      results.map((r) => `${r.topic}-${r.date_taken}`)
-    ).size;
-
     return {
-      totalQuizzes: uniqueQuizzes,
+      totalQuizzes: allQuizGroups.length,
       avgScore,
       totalQuestions,
       correctAnswers,
     };
   };
 
-  // Get unique topics
+  // Get unique topics for dropdown
   const getTopics = () => {
-    const topics = new Set(results.map((r) => r.topic));
-    return ["All", ...Array.from(topics)];
-  };
-
-  // Filter results by topic
-  const filteredResults = filterTopic === "All"
-    ? results
-    : results.filter((r) => r.topic === filterTopic);
-
-  // Group results by date and topic
-  const groupedResults = filteredResults.reduce((acc, result) => {
-    const key = `${result.topic}-${result.date_taken}`;
-    if (!acc[key]) {
-      acc[key] = {
-        topic: result.topic,
-        date: result.date_taken,
-        questions: [],
-      };
+    const topicMap = {};
+    for (const g of allQuizGroups) {
+      const lower = g.topic.toLowerCase();
+      if (!topicMap[lower]) {
+        topicMap[lower] = g.topic;
+      }
     }
-    acc[key].questions.push(result);
-    return acc;
-  }, {});
+    return ["All", ...Object.values(topicMap)];
+  };
 
   const stats = calculateStats();
   const topics = getTopics();
@@ -180,34 +248,29 @@ export default function QuizResultsView({ onLaunchRoadmap }) {
 
       {/* Quiz Results List */}
       <div className="results-list">
-        {Object.entries(groupedResults).length === 0 ? (
+        {filteredQuizGroups.length === 0 ? (
           <div className="no-results-card">
             <p>No results found for the selected topic</p>
           </div>
         ) : (
-          Object.entries(groupedResults).map(([key, group]) => {
+          filteredQuizGroups.map((group) => {
             const correctCount = group.questions.filter((q) => q.is_correct).length;
             const totalCount = group.questions.length;
-            const scorePercent = Math.round((correctCount / totalCount) * 100);
+            const scorePercent = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+            const key = group.id;
 
             return (
               <div key={key} className="result-group-card">
                 <div className="result-header">
                   <div className="result-info">
                     <h3 className="result-topic">{group.topic}</h3>
-                    <p className="result-date">
-                      {new Date(
-                        group.date && !group.date.endsWith("Z") && !group.date.includes("+")
-                          ? group.date + "Z"
-                          : group.date
-                      ).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    <p className="result-date">{formatQuizDate(group.date)}</p>
+                    <div className="overall-score-tag">
+                      <span className="overall-score-tag-label">Overall Score:</span>
+                      <strong className="overall-score-tag-value">
+                        {correctCount}/{totalCount} ({scorePercent}%)
+                      </strong>
+                    </div>
                   </div>
                   <div className="result-score">
                     <div className={`score-circle ${scorePercent >= 70 ? "good" : scorePercent >= 50 ? "fair" : "poor"}`}>
@@ -238,25 +301,68 @@ export default function QuizResultsView({ onLaunchRoadmap }) {
                 {/* Detailed Results */}
                 {selectedResult === key && (
                   <div className="result-details">
-                    {group.questions.map((question, idx) => (
-                      <div key={idx} className="detail-row">
-                        <div className="detail-status">
-                          {question.is_correct ? (
-                            <CheckCircle2 className="status-correct" size={16} />
-                          ) : (
-                            <XCircle className="status-incorrect" size={16} />
-                          )}
-                        </div>
-                        <div className="detail-content">
-                          <p className="detail-question">Q{idx + 1}: {question.selected_answer}</p>
-                          {!question.is_correct && (
-                            <p className="detail-correct">
-                              Correct answer: <strong>{question.correct_answer}</strong>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    <div className="details-header-row">
+                      <h4 className="details-section-title">Question Breakdown</h4>
+                      <span className="overall-score-summary">
+                        Overall Score: <strong>{correctCount}/{totalCount} ({scorePercent}%)</strong>
+                      </span>
+                    </div>
+
+                    <div className="questions-review-list">
+                      {group.questions.map((question, idx) => {
+                        const isCorrect = Boolean(question.is_correct);
+                        return (
+                          <div
+                            key={idx}
+                            className={`question-review-card ${isCorrect ? "card-correct" : "card-incorrect"}`}
+                          >
+                            <div className="question-review-header">
+                              <span className="question-number">Question {idx + 1}</span>
+                              <span className={`quiz-badge ${isCorrect ? "badge-correct" : "badge-incorrect"}`}>
+                                {isCorrect ? (
+                                  <>
+                                    <CheckCircle2 size={13} className="badge-icon" />
+                                    <span>✓ Correct</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle size={13} className="badge-icon" />
+                                    <span>✗ Incorrect</span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+
+                            {question.question && (
+                              <p className="question-statement">{question.question}</p>
+                            )}
+
+                            <div className="answer-comparison-grid">
+                              <div className={`answer-box user-answer-box ${isCorrect ? "is-correct" : "is-incorrect"}`}>
+                                <span className="answer-box-label">Your Answer:</span>
+                                <span className="answer-box-text">
+                                  {question.selected_answer || "No answer provided"}
+                                </span>
+                              </div>
+
+                              <div className="answer-box correct-answer-box">
+                                <span className="answer-box-label">Correct Answer:</span>
+                                <span className="answer-box-text">
+                                  {question.correct_answer || "—"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {question.explanation && (
+                              <div className="question-explanation-box">
+                                <span className="explanation-label">💡 Explanation:</span>
+                                <p className="explanation-text">{question.explanation}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -267,7 +373,7 @@ export default function QuizResultsView({ onLaunchRoadmap }) {
 
       {/* Roadmap CTA — calls quiz-performance mode */}
       <div className="topics-to-review-card">
-        <h3><Map size={16} style={{ verticalAlign: "middle", marginRight: "6px" }} />Generate Your Study Roadmap</h3>
+        <h3><MapIcon size={16} style={{ verticalAlign: "middle", marginRight: "6px" }} />Generate Your Study Roadmap</h3>
         <p className="placeholder-text">
           Based on your quiz history, our AI will detect your weak topics and build a personalised study roadmap to help you improve.
         </p>
@@ -305,7 +411,7 @@ export default function QuizResultsView({ onLaunchRoadmap }) {
             </>
           ) : (
             <>
-              <Map size={15} style={{ marginRight: "7px" }} />
+              <MapIcon size={15} style={{ marginRight: "7px" }} />
               Generate My Study Roadmap
             </>
           )}
