@@ -1968,8 +1968,8 @@
     flex-direction: row;
     width: 100%;
     min-width: 100%;
-    height: 58px;
-    padding: 0 8px;
+    height: 56px;
+    padding: 0 6px;
     justify-content: space-between;
     align-items: center;
     border-right: none;
@@ -1979,6 +1979,7 @@
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar-nav::-webkit-scrollbar {
@@ -1991,37 +1992,54 @@
 
   .sidebar-nav-items {
     flex-direction: row;
-    gap: 6px;
+    gap: 3px;
     margin-top: 0;
     align-items: center;
+    flex: 1;
+    justify-content: space-around;
   }
 
   .sidebar-bottom {
     flex-direction: row;
     margin-top: 0;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
-    margin-left: 4px;
+    margin-left: 2px;
     padding-left: 4px;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .nav-btn {
-    width: 36px;
-    height: 36px;
     flex-shrink: 0;
   }
 
+  .nav-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .nav-btn:active {
+    transform: scale(0.92);
+  }
+
+  .nav-btn.active {
+    background: rgba(124, 58, 237, 0.18);
+  }
+
   .user-avatar-circle {
-    width: 30px;
-    height: 30px;
-    font-size: 0.78rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
     flex-shrink: 0;
   }
 
   .logout-icon-btn {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     padding: 4px;
     flex-shrink: 0;
   }
@@ -2031,12 +2049,13 @@
   }
 
   .nav-indicator {
-    left: auto;
-    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 2px;
     top: auto;
-    width: 18px;
+    width: 14px;
     height: 3px;
-    border-radius: 3px 3px 0 0;
+    border-radius: 3px;
   }
 
   .top-bar {
