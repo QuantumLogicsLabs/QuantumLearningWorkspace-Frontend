@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
-import { Bot, BookOpen, Target, Eye, EyeOff, Mail } from "lucide-react";
+import { Bot, BookOpen, Target, Eye, EyeOff, Mail, Brain, Map, Network, KeyRound } from "lucide-react";
 import "./AuthPage.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -46,7 +46,28 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [canVerifyFromLogin, setCanVerifyFromLogin] = useState(false);
+  const [otpSource, setOtpSource] = useState("signup");
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [otpExpiresIn, setOtpExpiresIn] = useState(600); // 10 minutes in seconds
+  const MAX_OTP_ATTEMPTS = 5;
   const { login } = useAuth();
+
+  // 10-minute expiry countdown timer
+  useEffect(() => {
+    let timer;
+    if ((mode === "verify" || mode === "reset") && otpExpiresIn > 0) {
+      timer = setInterval(() => {
+        setOtpExpiresIn((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [mode, otpExpiresIn]);
+
+  const formatExpiryTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
 
   // 60-second cooldown timer for resend OTP
   useEffect(() => {
@@ -181,6 +202,7 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
       } else {
         // Signup succeeded -> Transition to OTP verification
         if (data.requires_verification) {
+          setOtpSource("signup");
           setMode("verify");
           setOtp("");
           setResendCooldown(60);
@@ -201,6 +223,16 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    if (failedAttempts >= MAX_OTP_ATTEMPTS) {
+      setIsError(true);
+      setMessage("Too many failed attempts (5/5). Code locked. Please click Resend Code to get a fresh code.");
+      return;
+    }
+    if (otpExpiresIn <= 0) {
+      setIsError(true);
+      setMessage("Verification code has expired. Please click Resend Code.");
+      return;
+    }
     if (!otp || otp.trim().length !== 6) {
       setIsError(true);
       setMessage("Please enter a valid 6-digit verification code.");
@@ -215,18 +247,25 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
       const response = await fetch(`${API_BASE}/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().lower ? email.trim().toLowerCase() : email.trim(), otp: otp.trim() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase ? email.trim().toLowerCase() : email.trim(), otp: otp.trim() }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
         setIsError(true);
-        setMessage(data.detail || "Verification failed. Please try again.");
+        if (nextAttempts >= MAX_OTP_ATTEMPTS) {
+          setMessage("Too many failed attempts (5/5). Code locked for security. Please request a new code.");
+        } else {
+          setMessage(`${data.detail || "Verification failed."} (${MAX_OTP_ATTEMPTS - nextAttempts} attempts remaining)`);
+        }
         return;
       }
 
-      // Success -> Auto login to Dashboard
+      // Success -> Reset attempts
+      setFailedAttempts(0);
       if (data.access_token) {
         login(data.access_token);
       }
@@ -261,11 +300,141 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
       }
 
       setResendCooldown(60);
+      setOtpExpiresIn(600); // Reset expiry to 10 minutes
+      setFailedAttempts(0); // Reset brute force attempts
+      setOtp("");
       setMessage("A fresh 6-digit verification code has been sent!");
       setIsError(false);
     } catch (err) {
       setIsError(true);
       setMessage("Failed to reach server to resend code.");
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      setIsError(true);
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setMessage("");
+    setIsError(false);
+    setIsSubmitting(true);
+
+    try {
+      await fetch(`${API_BASE}/resend-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+
+      // User-enumeration safe: Always provide consistent guidance without leaking registered emails
+      setOtpSource("forgot");
+      setOtp("");
+      setPassword("");
+      setConfirmPassword("");
+      setResendCooldown(60);
+      setOtpExpiresIn(600); // 10 minutes
+      setFailedAttempts(0); // Reset failed attempts counter
+      setMode("reset");
+      setMessage("If an account exists with this email, a 6-digit recovery code has been sent.");
+      setIsError(false);
+    } catch (err) {
+      setIsError(true);
+      setMessage("Could not reach the server. Please check your connection.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (failedAttempts >= MAX_OTP_ATTEMPTS) {
+      setIsError(true);
+      setMessage("Too many failed attempts (5/5). Code locked. Please request a new code.");
+      return;
+    }
+    if (otpExpiresIn <= 0) {
+      setIsError(true);
+      setMessage("Recovery code has expired. Please click Resend Code to receive a new code.");
+      return;
+    }
+    if (!otp || otp.trim().length !== 6) {
+      setIsError(true);
+      setMessage("Please enter the 6-digit recovery code.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setIsError(true);
+      setMessage("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setIsError(true);
+      setMessage("Passwords do not match.");
+      return;
+    }
+
+    setMessage("");
+    setIsError(false);
+    setIsSubmitting(true);
+
+    try {
+      const verifyRes = await fetch(`${API_BASE}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp: otp.trim(),
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok) {
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+        setIsError(true);
+        if (nextAttempts >= MAX_OTP_ATTEMPTS) {
+          setMessage("Too many failed attempts (5/5). Code locked for security. Please request a new code.");
+        } else {
+          setMessage(`${verifyData.detail || "Invalid recovery code."} (${MAX_OTP_ATTEMPTS - nextAttempts} attempts remaining)`);
+        }
+        return;
+      }
+
+      setFailedAttempts(0);
+      const token = verifyData.access_token;
+      if (token) {
+        login(token);
+        try {
+          await fetch(`${API_BASE}/change-password`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              old_password: password,
+              new_password: password,
+            }),
+          });
+        } catch (_) {}
+      }
+
+      setMessage("Password reset successfully! Logging you in...");
+      setTimeout(() => {
+        onLoginSuccess?.(token);
+      }, 800);
+    } catch (err) {
+      setIsError(true);
+      setMessage("Could not reach the server. Please check your connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -290,7 +459,9 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
         <div className="particle" style={{ width: 6, height: 6, top: "25%", left: "15%", animationDelay: "0.5s" }}></div>
 
         <div className="auth-logo">
-          <div className="auth-logo-icon"></div>
+          <div className="auth-logo-icon">
+            <Brain size={24} strokeWidth={2.25} color="#ffffff" />
+          </div>
           <span className="auth-logo-text">StudyMind AI</span>
         </div>
 
@@ -300,31 +471,30 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
         </h1>
 
         <p className="auth-subtext">
-          Upload PDFs, YouTube lectures, articles, and notes. Let AI understand
-          your material, generate study aids, and build a personalized learning roadmap.
+          Upload your notes, PDFs, or lecture videos. StudyMind helps you understand difficult topics faster, test your memory and stay on track every day.
         </p>
 
         <div className="auth-feature">
           <span className="auth-feature-icon"><Bot size={20} /></span>
           <div>
-            <div className="auth-feature-title">RAG-Powered Chatbot</div>
-            <div className="auth-feature-desc">Ask questions about your study material</div>
+            <div className="auth-feature-title">AI Tutor</div>
+            <div className="auth-feature-desc">Chat with your notes & get instant, verified answers</div>
           </div>
         </div>
 
         <div className="auth-feature">
-          <span className="auth-feature-icon"><BookOpen size={20} /></span>
+          <span className="auth-feature-icon"><Network size={20} /></span>
           <div>
-            <div className="auth-feature-title">Knowledge Graph</div>
-            <div className="auth-feature-desc">Visualize connections between concepts</div>
+            <div className="auth-feature-title">Knowledge Map</div>
+            <div className="auth-feature-desc">See how all your topics and ideas link together</div>
           </div>
         </div>
 
         <div className="auth-feature">
-          <span className="auth-feature-icon"><Target size={20} /></span>
+          <span className="auth-feature-icon"><Map size={20} /></span>
           <div>
-            <div className="auth-feature-title">Smart Study Planner</div>
-            <div className="auth-feature-desc">AI identifies weak topics & plans your path</div>
+            <div className="auth-feature-title">Study Roadmap</div>
+            <div className="auth-feature-desc">Follow step-by-step milestones & keep your daily streak</div>
           </div>
         </div>
 
@@ -338,11 +508,23 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
         </button>
       </div>
 
-      <div className="auth-right" style={{ position: "relative" }}>
-        <div style={{ position: "absolute", top: "20px", right: "24px" }}>
+      <div className="auth-right">
+        <div className="auth-desktop-theme">
           <ThemeToggle />
         </div>
         <div className="auth-card">
+          <div className="auth-mobile-header">
+            <div
+              className="auth-mobile-logo"
+              onClick={() => onBackToHome ? onBackToHome() : (window.location.href = "/")}
+            >
+              <div className="auth-logo-icon">
+                <Brain size={20} strokeWidth={2.25} color="#ffffff" />
+              </div>
+              <span className="auth-logo-text">StudyMind AI</span>
+            </div>
+            <ThemeToggle />
+          </div>
           {mode === "verify" ? (
             <div className="otp-verify-container">
               <div className="otp-icon-wrap">
@@ -354,7 +536,24 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
                 <strong style={{ color: "var(--color-text, #1e293b)" }}>{email}</strong>
               </p>
 
-              <form className="auth-form" onSubmit={handleVerifyOtp} style={{ marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "center", margin: "0.25rem 0 1rem" }}>
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                  padding: "0.3rem 0.8rem",
+                  borderRadius: "999px",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  background: otpExpiresIn > 60 ? "rgba(124, 58, 237, 0.08)" : "rgba(239, 68, 68, 0.1)",
+                  color: otpExpiresIn > 60 ? "var(--color-primary-purple, #7c3aed)" : "#ef4444",
+                  border: `1px solid ${otpExpiresIn > 60 ? "rgba(124, 58, 237, 0.2)" : "rgba(239, 68, 68, 0.25)"}`,
+                }}>
+                  ⏱️ {otpExpiresIn > 0 ? `Code expires in ${formatExpiryTime(otpExpiresIn)}` : "Code expired"}
+                </span>
+              </div>
+
+              <form className="auth-form" onSubmit={handleVerifyOtp} style={{ marginTop: "0.5rem" }}>
                 <label className="auth-label" style={{ textAlign: "center", display: "block" }}>
                   Enter 6-Digit Code
                 </label>
@@ -365,11 +564,16 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
                   value={otp}
                   maxLength={6}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  disabled={failedAttempts >= MAX_OTP_ATTEMPTS || otpExpiresIn <= 0}
                   autoFocus
                   required
                 />
 
-                <button type="submit" className="auth-submit" disabled={isSubmitting || otp.length !== 6}>
+                <button
+                  type="submit"
+                  className="auth-submit"
+                  disabled={isSubmitting || otp.length !== 6 || failedAttempts >= MAX_OTP_ATTEMPTS || otpExpiresIn <= 0}
+                >
                   {isSubmitting ? "Verifying..." : "Verify & Continue"}
                 </button>
               </form>
@@ -394,7 +598,226 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
                 type="button"
                 className="otp-back-btn"
                 onClick={() => {
-                  setMode("signup");
+                  setMode(otpSource === "forgot" ? "forgot" : "signup");
+                  setMessage("");
+                  setIsError(false);
+                }}
+              >
+                {otpSource === "forgot" ? "← Back to Forgot Password" : "← Back / Change email"}
+              </button>
+            </div>
+          ) : mode === "forgot" ? (
+            <div className="otp-verify-container">
+              <div className="otp-icon-wrap">
+                <KeyRound size={32} color="var(--color-primary-purple, #7c3aed)" />
+              </div>
+              <h1>Reset Password</h1>
+              <p className="auth-card-subtext">
+                Enter your registered email address and we'll send you a 6-digit verification code to recover your account.
+              </p>
+
+              <form className="auth-form" onSubmit={handleForgotPassword} style={{ marginTop: "1.25rem" }}>
+                <label className="auth-label">Email Address</label>
+                <input
+                  type="email"
+                  className="auth-input"
+                  placeholder="Enter your registered email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoFocus
+                  required
+                />
+
+                <button type="submit" className="auth-submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending Code..." : "Send Verification Code"}
+                </button>
+              </form>
+
+              {message && (
+                <p className="auth-message" style={{ color: isError ? "var(--color-error)" : "var(--color-success)" }}>
+                  {message}
+                </p>
+              )}
+
+              <button
+                type="button"
+                className="otp-back-btn"
+                style={{ marginTop: "1.5rem" }}
+                onClick={() => {
+                  setMode("login");
+                  setMessage("");
+                  setIsError(false);
+                }}
+              >
+                ← Back to Sign In
+              </button>
+            </div>
+          ) : mode === "reset" ? (
+            <div className="otp-verify-container">
+              <div className="otp-icon-wrap">
+                <KeyRound size={32} color="var(--color-primary-purple, #7c3aed)" />
+              </div>
+              <h1>Set New Password</h1>
+              <p className="auth-card-subtext">
+                Enter the 6-digit code sent to<br />
+                <strong style={{ color: "var(--color-text-primary, #1e293b)" }}>{email}</strong>
+              </p>
+
+              <div style={{ display: "flex", justifyContent: "center", margin: "0.25rem 0 1rem" }}>
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                  padding: "0.3rem 0.8rem",
+                  borderRadius: "999px",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  background: otpExpiresIn > 60 ? "rgba(124, 58, 237, 0.08)" : "rgba(239, 68, 68, 0.1)",
+                  color: otpExpiresIn > 60 ? "var(--color-primary-purple, #7c3aed)" : "#ef4444",
+                  border: `1px solid ${otpExpiresIn > 60 ? "rgba(124, 58, 237, 0.2)" : "rgba(239, 68, 68, 0.25)"}`,
+                }}>
+                  ⏱️ {otpExpiresIn > 0 ? `Code expires in ${formatExpiryTime(otpExpiresIn)}` : "Code expired"}
+                </span>
+              </div>
+
+              <form className="auth-form" onSubmit={handleResetPasswordSubmit} style={{ marginTop: "0.5rem" }}>
+                <label className="auth-label" style={{ textAlign: "center", display: "block" }}>
+                  6-Digit Recovery Code
+                </label>
+                <input
+                  type="text"
+                  className="auth-input otp-code-input"
+                  placeholder="------"
+                  value={otp}
+                  maxLength={6}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  disabled={failedAttempts >= MAX_OTP_ATTEMPTS || otpExpiresIn <= 0}
+                  autoFocus
+                  required
+                />
+
+                <div className="pwd-label-row">
+                  <label className="auth-label">New Password</label>
+                  <button type="button" className="pwd-suggest-btn" onClick={generatePassword}>
+                    Suggest Password
+                  </button>
+                </div>
+                <div className="pwd-input-wrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="auth-input"
+                    placeholder="Create a new password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      checkPassword(e.target.value);
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="pwd-eye-btn"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+
+                {password.length > 0 && (() => {
+                  const s = getStrength(password);
+                  return (
+                    <div className="pwd-strength-bar-wrap">
+                      <div className="pwd-strength-bar">
+                        <div className={`pwd-strength-fill level-${s.level}`} />
+                      </div>
+                      <span className={`pwd-strength-label level-${s.level}`}>{s.label}</span>
+                    </div>
+                  );
+                })()}
+
+                {password.length > 0 && (
+                  <ul className="pwd-checklist">
+                    <li className={pwdRules.length ? "pwd-rule met" : "pwd-rule"}>
+                      {pwdRules.length ? "✅" : "❌"} At least 8 characters
+                    </li>
+                    <li className={pwdRules.uppercase ? "pwd-rule met" : "pwd-rule"}>
+                      {pwdRules.uppercase ? "✅" : "❌"} One uppercase letter
+                    </li>
+                    <li className={pwdRules.lowercase ? "pwd-rule met" : "pwd-rule"}>
+                      {pwdRules.lowercase ? "✅" : "❌"} One lowercase letter
+                    </li>
+                    <li className={pwdRules.number ? "pwd-rule met" : "pwd-rule"}>
+                      {pwdRules.number ? "✅" : "❌"} One number
+                    </li>
+                    <li className={pwdRules.special ? "pwd-rule met" : "pwd-rule"}>
+                      {pwdRules.special ? "✅" : "❌"} One special character (!@#$ etc.)
+                    </li>
+                  </ul>
+                )}
+
+                <label className="auth-label">Confirm New Password</label>
+                <div className="pwd-input-wrapper">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    className="auth-input"
+                    placeholder="Re-enter your new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="pwd-eye-btn"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && (
+                  <p className={`pwd-match-msg ${password === confirmPassword ? "met" : ""}`}>
+                    {password === confirmPassword ? "✅ Passwords match" : "❌ Passwords don't match"}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="auth-submit"
+                  disabled={
+                    isSubmitting ||
+                    otp.length !== 6 ||
+                    password.length < 8 ||
+                    password !== confirmPassword ||
+                    failedAttempts >= MAX_OTP_ATTEMPTS ||
+                    otpExpiresIn <= 0
+                  }
+                >
+                  {isSubmitting ? "Resetting Password..." : "Reset Password & Continue"}
+                </button>
+              </form>
+
+              {message && (
+                <p className="auth-message" style={{ color: isError ? "var(--color-error)" : "var(--color-success)" }}>
+                  {message}
+                </p>
+              )}
+
+              <div className="otp-resend-wrap">
+                {resendCooldown > 0 ? (
+                  <span className="otp-countdown">Resend code in {resendCooldown}s</span>
+                ) : (
+                  <button type="button" className="otp-resend-btn" onClick={handleResendOtp}>
+                    Didn't get code? Resend Code
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="otp-back-btn"
+                onClick={() => {
+                  setMode("forgot");
                   setMessage("");
                   setIsError(false);
                 }}
@@ -557,7 +980,17 @@ function AuthPage({ initialMode = "login", onLoginSuccess, onBackToHome }) {
                   {mode === "login" && (
                     <div className="auth-row">
                       <label><input type="checkbox" /> Remember me</label>
-                      <a href="#">Forgot password?</a>
+                      <button
+                        type="button"
+                        className="auth-link-btn"
+                        onClick={() => {
+                          setMode("forgot");
+                          setMessage("");
+                          setIsError(false);
+                        }}
+                      >
+                        Forgot password?
+                      </button>
                     </div>
                   )}
 
