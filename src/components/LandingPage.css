@@ -5,15 +5,19 @@ html, body {
   width: 100%;
 }
 .landing {
-  --primary: #7C3AED;
-  --primary-light: #A78BFA;
-  --accent: #06B6D4;
+  /* Accent-driven colors now reference the global theme tokens so the landing
+     page follows the active light/dark mode AND accent preset, just like the
+     dashboard. Background/text keep landing-specific values (overridden for
+     light mode further down). */
+  --primary: var(--color-primary-purple);
+  --primary-light: var(--color-accent-purple);
+  --accent: var(--color-accent-pink);
   --bg-dark: #0B0B1F;
   --bg-card: rgba(255, 255, 255, 0.04);
   --border-soft: rgba(255, 255, 255, 0.08);
   --text-primary: #FFFFFF;
   --text-secondary: #A0A0C8;
-  --gradient: linear-gradient(135deg, #7C3AED, #06B6D4);
+  --gradient: var(--gradient-primary);
 
   background: var(--bg-dark);
   color: var(--text-primary);
@@ -84,13 +88,13 @@ html, body {
 }
 .btn-ghost:hover { color: var(--text-primary); }
 .btn-cta {
-  background: var(--gradient); border: none; color: white;
+  background: var(--color-accent-solid); border: none; color: white;
   padding: 8px 18px; border-radius: 8px; font-weight: 600;
-  cursor: pointer; transition: transform 0.2s ease;
+  cursor: pointer; transition: background 0.2s ease, transform 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.btn-cta:hover { transform: translateY(-2px); }
+.btn-cta:hover { background: var(--color-accent-solid-hover); transform: translateY(-2px); }
 
 .hero {
   position: relative;
@@ -104,7 +108,7 @@ html, body {
 .hero-content { position: relative; z-index: 1; max-width: 780px; }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3);
+  background: color-mix(in srgb, var(--primary) 15%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
   padding: 8px 18px; border-radius: 50px; font-size: 0.85rem;
   color: var(--primary-light); margin-bottom: 28px;
 }
@@ -114,16 +118,16 @@ html, body {
 .hero-subtitle { font-size: 1.1rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px; }
 .hero-tags { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
 .tag {
-  background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2);
+  background: color-mix(in srgb, var(--primary) 8%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   padding: 7px 14px; border-radius: 8px; font-size: 0.8rem; color: var(--text-secondary);
 }
 .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 .btn-primary {
-  background: var(--gradient); border: none; color: white;
+  background: var(--color-accent-solid); border: none; color: white;
   padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 1rem;
   cursor: pointer; transition: all 0.2s ease;
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(124,58,237,0.35); }
+.btn-primary:hover { background: var(--color-accent-solid-hover); transform: translateY(-2px); box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 35%, transparent); }
 .btn-secondary {
   background: rgba(255,255,255,0.06); border: 1px solid var(--border-soft); color: var(--text-primary);
   padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer;
@@ -199,8 +203,8 @@ html, body {
   box-sizing: border-box;
 }
 .landing-flashcard-front {
-  background: rgba(124, 58, 237, 0.12);
-  border: 1px solid rgba(124, 58, 237, 0.3);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
   transform: rotateY(0deg);
 }
 .landing-flashcard-back {
@@ -237,7 +241,7 @@ html, body {
   transition: background 0.2s ease;
 }
 .landing-flashcard-controls button:hover {
-  background: rgba(124, 58, 237, 0.15);
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
 
@@ -250,8 +254,8 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(124, 58, 237, 0.12);
-  border: 1px solid rgba(124, 58, 237, 0.28);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
   padding: 6px 16px;
   border-radius: 50px;
   font-size: 0.82rem;
@@ -277,12 +281,12 @@ html, body {
 }
 .step-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(124, 58, 237, 0.45);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
 }
 .step-number {
   font-size: 2.4rem;
   font-weight: 800;
-  color: rgba(124, 58, 237, 0.22);
+  color: color-mix(in srgb, var(--primary) 22%, transparent);
   position: absolute;
   top: 22px;
   right: 24px;
@@ -293,8 +297,8 @@ html, body {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: rgba(124, 58, 237, 0.12);
-  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -319,8 +323,8 @@ html, body {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--primary-light, #a78bfa);
-  background: rgba(124, 58, 237, 0.08);
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   padding: 5px 12px;
   border-radius: 8px;
   width: fit-content;
@@ -345,7 +349,8 @@ html, body {
 }
 .cta-card h2 { font-size: 2rem; margin-bottom: 10px; }
 .cta-card p { margin-bottom: 26px; opacity: 0.9; }
-.cta-card .btn-primary { background: white; color: var(--primary); }
+.cta-card .btn-primary { background: #ffffff; color: var(--primary); }
+.cta-card .btn-primary:hover { background: #f1f5f9; }
 
 
 .footer {
@@ -487,7 +492,7 @@ html, body {
 
 [data-theme="light"] .landing-flashcard-front {
   background: #ffffff;
-  border-color: rgba(109, 40, 217, 0.2);
+  border-color: color-mix(in srgb, var(--primary) 20%, transparent);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
@@ -500,8 +505,8 @@ html, body {
 }
 
 [data-theme="light"] .hero-badge {
-  background: rgba(109, 40, 217, 0.08);
-  border-color: rgba(109, 40, 217, 0.2);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 20%, transparent);
   color: var(--primary);
 }
 

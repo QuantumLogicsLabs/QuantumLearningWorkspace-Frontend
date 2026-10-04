@@ -26,6 +26,11 @@
   --color-accent-purple: #a78bfa;
   --color-accent-pink: #ec4899;
 
+  /* Solid accent for buttons — tracks the active accent preset automatically
+     via --color-primary-purple, with a subtly darkened hover variant. */
+  --color-accent-solid: var(--color-primary-purple);
+  --color-accent-solid-hover: color-mix(in srgb, var(--color-primary-purple) 86%, #000);
+
   --color-error: #ef4444;
   --color-success: #22c55e;
   --color-warning: #f59e0b;

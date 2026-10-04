@@ -42,22 +42,28 @@ function SidebarNav({ activeTab, setActiveTab, onRequestLogout }) {
   };
 
   const { userEmail } = useAuth();
-  const getInitialLetter = () => {
-    if (!userEmail) return "U";
+  const getDisplayName = () => {
+    if (!userEmail) return "Student User";
     const userScoped = localStorage.getItem(`studymind_user_name_${userEmail}`);
-    if (userScoped && userScoped.trim()) return userScoped.trim()[0].toUpperCase();
+    if (userScoped && userScoped.trim()) return userScoped.trim();
 
     const saved = localStorage.getItem("studymind_user_name");
     const cachedEmail = localStorage.getItem("studymind_cached_email");
-    if (saved && saved.trim() && cachedEmail === userEmail) return saved.trim()[0].toUpperCase();
+    if (saved && saved.trim() && cachedEmail === userEmail) return saved.trim();
 
-    return userEmail[0].toUpperCase();
+    return userEmail.split("@")[0];
+  };
+  const getInitialLetter = () => {
+    const name = getDisplayName();
+    return (name || userEmail || "U")[0].toUpperCase();
   };
   const [initial, setInitial] = useState(getInitialLetter);
+  const [displayName, setDisplayName] = useState(getDisplayName);
 
   useEffect(() => {
     const handleUpdate = () => {
       setInitial(getInitialLetter());
+      setDisplayName(getDisplayName());
     };
     window.addEventListener("studymind_profile_updated", handleUpdate);
     return () => window.removeEventListener("studymind_profile_updated", handleUpdate);
@@ -75,9 +81,12 @@ function SidebarNav({ activeTab, setActiveTab, onRequestLogout }) {
 
   return (
     <aside className={`sidebar-nav ${expanded ? "expanded" : ""}`}>
-      {/* Logo */}
+      {/* Logo + Brand */}
       <div className="sidebar-logo-area">
-        <Brain className="logo-icon" size={26} strokeWidth={2.25} />
+        <div className="sidebar-logo-badge">
+          <Brain className="logo-icon" size={26} strokeWidth={2.25} />
+        </div>
+        <span className="sidebar-brand-name">StudyMind AI</span>
       </div>
 
       {/* Navigation Items */}
@@ -99,24 +108,25 @@ function SidebarNav({ activeTab, setActiveTab, onRequestLogout }) {
         ))}
       </nav>
 
-      <button
-          className="sidebar-collapse-btn"
-          onClick={toggleExpanded}
-          title={expanded ? "Collapse sidebar" : "Expand sidebar"}
-          type="button"
-        >
-          {expanded ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />}
-        </button>
-
-        {/* Bottom: User + Logout */}
+      {/* Bottom: User + Logout */}
       <div className="sidebar-bottom">
         <div
-          className={`user-avatar-circle ${activeTab === "profile" || activeTab === "settings" ? "active-profile-avatar" : ""}`}
+          className={`sidebar-user ${activeTab === "profile" || activeTab === "settings" ? "active-profile" : ""}`}
           onClick={() => setActiveTab("profile")}
-          style={{ cursor: "pointer", position: "relative" }}
+          style={{ cursor: "pointer" }}
+          title={`Profile: ${displayName}`}
         >
-          {initial}
-          <span className="nav-tooltip">Profile</span>
+          <div
+            className={`user-avatar-circle ${activeTab === "profile" || activeTab === "settings" ? "active-profile-avatar" : ""}`}
+            style={{ position: "relative" }}
+          >
+            {initial}
+            <span className="nav-tooltip">Profile</span>
+          </div>
+          <div className="sidebar-user-meta">
+            <span className="sidebar-user-name">{displayName}</span>
+            <span className="sidebar-user-email">{userEmail}</span>
+          </div>
         </div>
         <button
           className="logout-icon-btn"
@@ -131,6 +141,18 @@ function SidebarNav({ activeTab, setActiveTab, onRequestLogout }) {
           </svg>
         </button>
       </div>
+
+      {/* Collapse / Expand toggle — pinned to the bottom as a full-width row,
+          styled consistently in both collapsed and expanded states */}
+      <button
+        className="sidebar-collapse-btn"
+        onClick={toggleExpanded}
+        title={expanded ? "Collapse sidebar" : "Expand sidebar"}
+        type="button"
+      >
+        {expanded ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />}
+        <span className="collapse-btn-label">Collapse</span>
+      </button>
     </aside>
   );
 }

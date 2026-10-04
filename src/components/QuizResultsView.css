@@ -573,7 +573,7 @@
 
 .btn-retry {
   padding: 10px 24px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -584,6 +584,7 @@
 }
 
 .btn-retry:hover {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }

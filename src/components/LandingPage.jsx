@@ -72,6 +72,23 @@ function useParticleCanvas(canvasRef) {
     let animationId;
     let width, height;
 
+    // Particle colors follow the active accent preset by reading the global
+    // theme tokens (refreshed on each init / resize). Falls back to violet.
+    let accentColors = ["124,58,237", "6,182,212"];
+    const hexToRgb = (hex) => {
+      const h = (hex || "").trim().replace("#", "");
+      if (h.length !== 6) return null;
+      const n = parseInt(h, 16);
+      if (Number.isNaN(n)) return null;
+      return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+    };
+    const readAccent = () => {
+      const cs = getComputedStyle(document.documentElement);
+      const p = hexToRgb(cs.getPropertyValue("--color-primary-purple"));
+      const a = hexToRgb(cs.getPropertyValue("--color-accent-pink"));
+      accentColors = [p || "124,58,237", a || "6,182,212"];
+    };
+
     const resize = () => {
       width = canvas.width = canvas.offsetWidth;
       height = canvas.height = canvas.offsetHeight;
@@ -85,7 +102,7 @@ function useParticleCanvas(canvasRef) {
         this.speedX = (Math.random() - 0.5) * 0.3;
         this.speedY = (Math.random() - 0.5) * 0.3;
         this.opacity = Math.random() * 0.4 + 0.15;
-        this.color = Math.random() > 0.5 ? "124,58,237" : "6,182,212";
+        this.color = Math.random() > 0.5 ? accentColors[0] : accentColors[1];
       }
       update() {
         this.x += this.speedX;
@@ -103,6 +120,7 @@ function useParticleCanvas(canvasRef) {
 
     const init = () => {
       resize();
+      readAccent();
       particles = [];
       const count = Math.min(70, Math.floor((width * height) / 16000));
       for (let i = 0; i < count; i++) particles.push(new Particle());
@@ -116,7 +134,7 @@ function useParticleCanvas(canvasRef) {
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 110) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(124,58,237,${0.1 * (1 - dist / 110)})`;
+            ctx.strokeStyle = `rgba(${accentColors[0]},${0.1 * (1 - dist / 110)})`;
             ctx.lineWidth = 0.5;
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);

@@ -367,7 +367,7 @@
 }
 
 .chat-send-btn {
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: white;
   border: none;
   width: 44px;
@@ -377,11 +377,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
   flex-shrink: 0;
 }
 
 .chat-send-btn:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: scale(1.05);
 }
 
