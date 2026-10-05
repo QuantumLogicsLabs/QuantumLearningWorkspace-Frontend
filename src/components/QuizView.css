@@ -224,7 +224,7 @@
 /* Generate Quiz Button */
 .btn-generate-quiz {
   padding: 14px 28px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -236,6 +236,7 @@
 }
 
 .btn-generate-quiz:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
@@ -454,7 +455,7 @@
 
 .btn-submit-quiz {
   padding: 12px 32px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -465,6 +466,7 @@
 }
 
 .btn-submit-quiz:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }

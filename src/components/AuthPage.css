@@ -189,7 +189,7 @@
 }
 
 .auth-tab.active {
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: var(--color-text-primary);
   border-color: transparent;
 }
@@ -264,7 +264,7 @@
 }
 
 .auth-submit {
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: var(--color-text-primary);
   border: none;
   border-radius: var(--radius-md);
@@ -273,10 +273,11 @@
   font-weight: 600;
   cursor: pointer;
   margin-top: 0.25rem;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .auth-submit:hover {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(124,58,237,0.35);
 }

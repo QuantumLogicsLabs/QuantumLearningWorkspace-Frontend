@@ -93,7 +93,7 @@
 
 .profile-edit-btn {
   padding: 10px 24px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   border: none;
   border-radius: 10px;
   color: white;
@@ -105,6 +105,7 @@
 }
 
 .profile-edit-btn:hover {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
@@ -378,7 +379,7 @@
 
 .btn-submit-password {
   padding: 12px 24px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -390,6 +391,7 @@
 }
 
 .btn-submit-password:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
@@ -528,7 +530,7 @@
 .save-profile-btn {
   margin-top: 4px;
   padding: 11px 20px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   border: none;
   border-radius: var(--radius-md, 10px);
   color: #ffffff;
@@ -540,6 +542,7 @@
 }
 
 .save-profile-btn:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }

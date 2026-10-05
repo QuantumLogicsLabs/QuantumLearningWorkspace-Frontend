@@ -28,21 +28,37 @@
 }
 
 .sidebar-logo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.sidebar-logo-badge {
   width: 42px;
   height: 42px;
+  min-width: 42px;
   background: var(--gradient-primary);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
-  margin-bottom: 36px;
   animation: logoPulse 3s ease-in-out infinite;
 }
 
 @keyframes logoPulse {
   0%, 100% { box-shadow: 0 0 10px rgba(124, 58, 237, 0.4); }
   50% { box-shadow: 0 0 22px rgba(124, 58, 237, 0.75); }
+}
+
+.sidebar-brand-name {
+  display: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  color: var(--color-text-primary);
 }
 
 .sidebar-nav-items {
@@ -132,6 +148,41 @@
 
 .user-avatar-circle.active-profile-avatar {
   box-shadow: 0 0 0 2px var(--color-sidebar-bg), 0 0 0 4px var(--color-accent-purple);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-user-meta {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+}
+
+.sidebar-user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-email {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-icon-btn {
@@ -439,7 +490,7 @@
 }
 
 .upload-submit-btn {
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -452,6 +503,7 @@
 }
 
 .upload-submit-btn:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
 }
@@ -1297,13 +1349,18 @@
 
 .error-state button {
   padding: 8px 20px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   border: none;
   border-radius: var(--radius-md);
   color: white;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.error-state button:hover {
+  background: var(--color-accent-solid-hover);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1735,7 +1792,7 @@
 .btn-send-chat {
   width: 42px;
   height: 42px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-solid);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -1749,6 +1806,7 @@
 }
 
 .btn-send-chat:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: scale(1.05);
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
 }
@@ -2548,7 +2606,7 @@
 
 .modal-btn-generate {
   flex: 2;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: var(--color-accent-solid);
   color: #ffffff;
   border: none;
   padding: 10px 18px;
@@ -2565,8 +2623,9 @@
 }
 
 .modal-btn-generate:hover:not(:disabled) {
+  background: var(--color-accent-solid-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 }
 
 .modal-btn-generate:disabled {
@@ -2690,16 +2749,56 @@
   display: none;
 }
 
+/* Expanded reveals: brand name + user name/email.
+   Containers go full-width with a shared 14px gutter so the logo, nav icons,
+   avatar and collapse toggle all align to the same left edge. */
+.sidebar-nav.expanded .sidebar-logo-area {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0 14px;
+}
+
+.sidebar-nav.expanded .sidebar-nav-items {
+  width: 100%;
+}
+
+.sidebar-nav.expanded .sidebar-brand-name {
+  display: inline-block;
+}
+
+.sidebar-nav.expanded .sidebar-bottom {
+  width: 100%;
+  align-items: stretch;
+  padding: 0 8px;
+}
+
+.sidebar-nav.expanded .sidebar-user {
+  justify-content: flex-start;
+  padding: 6px;
+}
+
+.sidebar-nav.expanded .sidebar-user:hover {
+  background: var(--color-surface-hover, rgba(124, 58, 237, 0.08));
+}
+
+.sidebar-nav.expanded .sidebar-user-meta {
+  display: flex;
+}
+
+/* Collapse / expand toggle — pinned to the bottom as a full-width row,
+   same styling in both states (icon-only when collapsed, icon + label
+   when expanded). */
 .sidebar-collapse-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin: 6px auto 4px;
+  gap: 8px;
+  width: 48px;
+  height: 40px;
+  margin: 14px auto 0;
   background: var(--color-surface-hover, rgba(124, 58, 237, 0.08));
   border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -2711,8 +2810,22 @@
   color: var(--color-text-primary);
 }
 
+.collapse-btn-label {
+  display: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .sidebar-nav.expanded .sidebar-collapse-btn {
-  margin: 6px 12px 4px auto;
+  width: calc(100% - 24px);
+  margin: 14px 12px 0;
+  justify-content: flex-start;
+  padding: 0 14px;
+}
+
+.sidebar-nav.expanded .collapse-btn-label {
+  display: inline-block;
 }
 
 @media (max-width: 768px) {
@@ -2729,6 +2842,20 @@
     display: none;
   }
   .sidebar-collapse-btn {
+    display: none;
+  }
+  /* Keep the mobile bottom bar icon-only even when "expanded" is toggled */
+  .sidebar-nav.expanded .sidebar-bottom {
+    align-items: center;
+    padding: 0;
+  }
+  .sidebar-nav.expanded .sidebar-user {
+    padding: 0;
+  }
+  .sidebar-nav.expanded .sidebar-user-meta {
+    display: none;
+  }
+  .sidebar-nav.expanded .sidebar-brand-name {
     display: none;
   }
 }
