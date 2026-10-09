@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -70,6 +70,7 @@ export default function FlashcardsView({ initialContext }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardReviews, setCardReviews] = useState({}); // { [cardId]: 'known' | 'still_learning' }
+  const [bookmarkedCards, setBookmarkedCards] = useState(new Set());
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -169,6 +170,26 @@ export default function FlashcardsView({ initialContext }) {
   // Card Flip Toggle
   const handleCardClick = () => {
     setIsFlipped((prev) => !prev);
+  };
+
+  // Toggle Star / Bookmark on Current Card
+  const handleToggleBookmark = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!cards.length) return;
+    const currentCard = cards[currentIndex];
+    if (!currentCard) return;
+    const cardId = currentCard.id || `card-${currentIndex}`;
+    setBookmarkedCards((prev) => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+        showToast("Card unstarred", "info");
+      } else {
+        next.add(cardId);
+        showToast("Card starred for review ⭐", "success");
+      }
+      return next;
+    });
   };
 
   // Review Action: "known" or "still_learning"
@@ -299,9 +320,12 @@ export default function FlashcardsView({ initialContext }) {
       } else if (e.key === "2") {
         e.preventDefault();
         handleReviewAction("known");
+      } else if (e.key === "b" || e.key === "B") {
+        e.preventDefault();
+        handleToggleBookmark();
       }
     },
-    [cards, currentIndex, isCompleted]
+    [cards, currentIndex, isCompleted, handleToggleBookmark]
   );
 
   useEffect(() => {
@@ -313,7 +337,10 @@ export default function FlashcardsView({ initialContext }) {
   const knownCount = Object.values(cardReviews).filter((s) => s === "known").length;
   const learningCount = Object.values(cardReviews).filter((s) => s === "still_learning").length;
   const currentCard = cards[currentIndex];
-  const currentCardStatus = currentCard ? cardReviews[currentCard.id || `card-${currentIndex}`] : null;
+  const currentCardId = currentCard ? (currentCard.id || `card-${currentIndex}`) : null;
+  const currentCardStatus = currentCard ? cardReviews[currentCardId] : null;
+  const isCurrentBookmarked = currentCardId ? bookmarkedCards.has(currentCardId) : false;
+  const bookmarkedCount = bookmarkedCards.size;
   const progressPercent = cards.length ? Math.round(((currentIndex + (currentCardStatus ? 1 : 0)) / cards.length) * 100) : 0;
 
   return (
@@ -445,6 +472,11 @@ export default function FlashcardsView({ initialContext }) {
               <span className="stat-pill learning" title="Marked as Still Learning">
                 <RotateCcw size={13} /> Learning: {learningCount}
               </span>
+              {bookmarkedCount > 0 && (
+                <span className="stat-pill bookmarked" title="Starred for review">
+                  <Star size={13} fill="currentColor" /> Starred: {bookmarkedCount}
+                </span>
+              )}
             </div>
           </div>
 
@@ -469,11 +501,22 @@ export default function FlashcardsView({ initialContext }) {
               <div className="flashcard-face flashcard-face-front">
                 <div className="flashcard-badge-row">
                   <span className="flashcard-type-badge">❓ Question</span>
-                  {currentCardStatus && (
-                    <span className={`flashcard-status-indicator ${currentCardStatus}`}>
-                      {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
-                    </span>
-                  )}
+                  <div className="flashcard-badge-actions">
+                    {currentCardStatus && (
+                      <span className={`flashcard-status-indicator ${currentCardStatus}`}>
+                        {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={`flashcard-star-btn ${isCurrentBookmarked ? "active" : ""}`}
+                      onClick={handleToggleBookmark}
+                      title={isCurrentBookmarked ? "Unstar card (B)" : "Star card for review (B)"}
+                      aria-label="Star this card"
+                    >
+                      <Star size={16} fill={isCurrentBookmarked ? "currentColor" : "none"} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flashcard-body-text">
@@ -492,11 +535,22 @@ export default function FlashcardsView({ initialContext }) {
               <div className="flashcard-face flashcard-face-back">
                 <div className="flashcard-badge-row">
                   <span className="flashcard-type-badge"><Lightbulb size={13} /> Answer &amp; Explanation</span>
-                  {currentCardStatus && (
-                    <span className={`flashcard-status-indicator ${currentCardStatus}`}>
-                      {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
-                    </span>
-                  )}
+                  <div className="flashcard-badge-actions">
+                    {currentCardStatus && (
+                      <span className={`flashcard-status-indicator ${currentCardStatus}`}>
+                        {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={`flashcard-star-btn ${isCurrentBookmarked ? "active" : ""}`}
+                      onClick={handleToggleBookmark}
+                      title={isCurrentBookmarked ? "Unstar card (B)" : "Star card for review (B)"}
+                      aria-label="Star this card"
+                    >
+                      <Star size={16} fill={isCurrentBookmarked ? "currentColor" : "none"} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flashcard-body-text">
