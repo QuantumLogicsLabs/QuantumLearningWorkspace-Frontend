@@ -572,6 +572,12 @@
   gap: 1rem;
 }
 
+.secondary-nav-center-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .secondary-nav-btn {
   display: inline-flex;
   align-items: center;
@@ -711,6 +717,35 @@
 /* ─── Responsive adjustments ────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
+  .flashcards-setup-card {
+    padding: 1.25rem 1rem;
+  }
+  .flashcards-input-row {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .flashcards-topic-input {
+    width: 100%;
+    min-width: 0;
+  }
+  .flashcards-custom-select {
+    width: 100%;
+    display: block;
+  }
+  .flashcards-custom-select .custom-select-trigger {
+    width: 100%;
+  }
+  .flashcards-custom-select .custom-select-menu {
+    width: 100%;
+    max-width: 100%;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+  }
+  .flashcards-generate-btn {
+    width: 100%;
+    justify-content: center;
+  }
   .flashcard-scene .flashcard-face {
     padding: 1.75rem 1.25rem;
     min-height: 290px;
@@ -729,13 +764,38 @@
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  .flashcards-shortcuts-bar {
-    justify-content: center;
-    font-size: 0.75rem;
-    padding: 0.5rem;
+  .flashcards-nav-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    width: 100%;
   }
-  .shortcuts-chip-group {
+  .flashcards-nav-controls .secondary-nav-btn {
+    width: 100%;
     justify-content: center;
+    padding: 0.7rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  .secondary-nav-center-group {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    width: 100%;
+  }
+  .secondary-nav-center-group .secondary-nav-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ─── Responsive Shortcuts Visibility (Desktop Only) ───────────────────────── */
+@media (max-width: 768px) {
+  .flashcards-shortcuts-bar {
+    display: none !important;
+  }
+  .action-kbd-hint {
+    display: none !important;
   }
 }
 
