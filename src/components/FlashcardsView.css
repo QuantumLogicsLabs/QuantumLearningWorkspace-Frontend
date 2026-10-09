@@ -287,6 +287,12 @@
   perspective: 1200px;
   cursor: pointer;
   user-select: none;
+  outline: none;
+  transition: transform 0.15s ease;
+}
+
+.flashcard-scene:active {
+  transform: scale(0.99);
 }
 
 .flashcard-inner {
@@ -294,7 +300,7 @@
   width: 100%;
   min-height: 330px;
   height: 100%;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.55s cubic-bezier(0.34, 1.25, 0.64, 1);
   transform-style: preserve-3d;
 }
 
@@ -384,6 +390,81 @@
 .flashcard-status-indicator.still_learning {
   background: rgba(245, 158, 11, 0.15);
   color: var(--color-warning, #f59e0b);
+}
+
+.flashcard-badge-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flashcard-star-btn {
+  background: transparent;
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.flashcard-star-btn:hover {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  transform: scale(1.1);
+}
+
+.flashcard-star-btn.active {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.18);
+}
+
+.flashcard-audio-btn {
+  background: transparent;
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.flashcard-audio-btn:hover {
+  color: var(--color-accent-solid, #7c3aed);
+  border-color: var(--color-accent-solid, #7c3aed);
+  background: rgba(124, 58, 237, 0.12);
+  transform: scale(1.1);
+}
+
+.flashcard-audio-btn.speaking {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.15);
+  animation: pulseSpeaking 1.2s infinite;
+}
+
+@keyframes pulseSpeaking {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.stat-pill.bookmarked {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .flashcard-body-text {
@@ -563,10 +644,10 @@
 
 .summary-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 1rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 540px;
   margin: 0.5rem 0;
 }
 
@@ -593,6 +674,22 @@
 
 .summary-metric-val.learning {
   color: var(--color-warning, #f59e0b);
+}
+
+.summary-metric-val.star {
+  color: #f59e0b;
+}
+
+.study-action-btn.btn-starred-practice {
+  background: #d97706;
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35);
+}
+
+.study-action-btn.btn-starred-practice:hover:not(:disabled) {
+  background: #b45309;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45);
 }
 
 .summary-metric-lbl {
@@ -631,6 +728,14 @@
   .summary-metrics-grid {
     grid-template-columns: 1fr;
     gap: 0.75rem;
+  }
+  .flashcards-shortcuts-bar {
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+  .shortcuts-chip-group {
+    justify-content: center;
   }
 }
 
@@ -699,4 +804,77 @@
 
 .flashcards-doc-select {
   width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Keyboard Shortcuts HUD & Action KBD Badges
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.action-kbd-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.72rem;
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.flashcards-shortcuts-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-surface-hover, rgba(124, 58, 237, 0.05));
+  border: 1px dashed var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.shortcuts-bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.shortcuts-chip-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.shortcut-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  background: var(--color-card-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--color-card-border, rgba(255, 255, 255, 0.08));
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.shortcut-chip kbd {
+  display: inline-block;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.7rem;
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  background: var(--color-input-bg, #1e1b4b);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15));
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }

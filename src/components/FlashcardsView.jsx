@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -70,6 +70,7 @@ export default function FlashcardsView({ initialContext }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardReviews, setCardReviews] = useState({}); // { [cardId]: 'known' | 'still_learning' }
+  const [bookmarkedCards, setBookmarkedCards] = useState(new Set());
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -170,6 +171,56 @@ export default function FlashcardsView({ initialContext }) {
   const handleCardClick = () => {
     setIsFlipped((prev) => !prev);
   };
+
+  // Toggle Star / Bookmark on Current Card
+  const handleToggleBookmark = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!cards.length) return;
+    const currentCard = cards[currentIndex];
+    if (!currentCard) return;
+    const cardId = currentCard.id || `card-${currentIndex}`;
+    setBookmarkedCards((prev) => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+        showToast("Card unstarred", "info");
+      } else {
+        next.add(cardId);
+        showToast("Card starred for review ⭐", "success");
+      }
+      return next;
+    });
+  };
+
+  // Text-to-Speech (Audio Pronunciation & Listen)
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const handleSpeakText = (e, text) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!("speechSynthesis" in window)) {
+      showToast("Speech synthesis not supported in this browser", "info");
+      return;
+    }
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  }, [currentIndex, isFlipped]);
 
   // Review Action: "known" or "still_learning"
   const handleReviewAction = async (status) => {
@@ -278,13 +329,30 @@ export default function FlashcardsView({ initialContext }) {
     showToast(`Studying ${weakCards.length} cards needing practice`, "info");
   };
 
+  // Review Only Starred / Bookmarked Cards
+  const handleReviewStarredCards = () => {
+    const starredCards = cards.filter((c, idx) =>
+      bookmarkedCards.has(c.id || `card-${idx}`)
+    );
+    if (starredCards.length === 0) {
+      showToast("No cards starred! Star difficult cards using ⭐ or B", "info");
+      return;
+    }
+    setCards(starredCards);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setCardReviews({});
+    setIsCompleted(false);
+    showToast(`Studying ${starredCards.length} starred flashcards ⭐`, "info");
+  };
+
   // Keyboard Shortcuts (Space/Enter to flip, Left/Right arrows to navigate)
   const handleKeyDown = useCallback(
     (e) => {
       if (!cards.length || isCompleted) return;
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
 
-      if (e.code === "Space" || e.key === " ") {
+      if (e.code === "Space" || e.key === " " || e.key === "f" || e.key === "F") {
         e.preventDefault();
         setIsFlipped((prev) => !prev);
       } else if (e.key === "ArrowRight") {
@@ -299,9 +367,18 @@ export default function FlashcardsView({ initialContext }) {
       } else if (e.key === "2") {
         e.preventDefault();
         handleReviewAction("known");
+      } else if (e.key === "b" || e.key === "B") {
+        e.preventDefault();
+        handleToggleBookmark();
+      } else if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        handleShuffleDeck();
+      } else if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
+        handleRestartDeck();
       }
     },
-    [cards, currentIndex, isCompleted]
+    [cards, currentIndex, isCompleted, handleToggleBookmark, handleNextCard, handlePrevCard, handleReviewAction, handleShuffleDeck, handleRestartDeck]
   );
 
   useEffect(() => {
@@ -313,7 +390,10 @@ export default function FlashcardsView({ initialContext }) {
   const knownCount = Object.values(cardReviews).filter((s) => s === "known").length;
   const learningCount = Object.values(cardReviews).filter((s) => s === "still_learning").length;
   const currentCard = cards[currentIndex];
-  const currentCardStatus = currentCard ? cardReviews[currentCard.id || `card-${currentIndex}`] : null;
+  const currentCardId = currentCard ? (currentCard.id || `card-${currentIndex}`) : null;
+  const currentCardStatus = currentCard ? cardReviews[currentCardId] : null;
+  const isCurrentBookmarked = currentCardId ? bookmarkedCards.has(currentCardId) : false;
+  const bookmarkedCount = bookmarkedCards.size;
   const progressPercent = cards.length ? Math.round(((currentIndex + (currentCardStatus ? 1 : 0)) / cards.length) * 100) : 0;
 
   return (
@@ -445,6 +525,11 @@ export default function FlashcardsView({ initialContext }) {
               <span className="stat-pill learning" title="Marked as Still Learning">
                 <RotateCcw size={13} /> Learning: {learningCount}
               </span>
+              {bookmarkedCount > 0 && (
+                <span className="stat-pill bookmarked" title="Starred for review">
+                  <Star size={13} fill="currentColor" /> Starred: {bookmarkedCount}
+                </span>
+              )}
             </div>
           </div>
 
@@ -469,11 +554,31 @@ export default function FlashcardsView({ initialContext }) {
               <div className="flashcard-face flashcard-face-front">
                 <div className="flashcard-badge-row">
                   <span className="flashcard-type-badge">❓ Question</span>
-                  {currentCardStatus && (
-                    <span className={`flashcard-status-indicator ${currentCardStatus}`}>
-                      {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
-                    </span>
-                  )}
+                  <div className="flashcard-badge-actions">
+                    {currentCardStatus && (
+                      <span className={`flashcard-status-indicator ${currentCardStatus}`}>
+                        {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={`flashcard-audio-btn ${isSpeaking ? "speaking" : ""}`}
+                      onClick={(e) => handleSpeakText(e, currentCard?.front || currentCard?.question || "")}
+                      title={isSpeaking ? "Stop audio" : "Listen to question"}
+                      aria-label="Listen to question"
+                    >
+                      {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      className={`flashcard-star-btn ${isCurrentBookmarked ? "active" : ""}`}
+                      onClick={handleToggleBookmark}
+                      title={isCurrentBookmarked ? "Unstar card (B)" : "Star card for review (B)"}
+                      aria-label="Star this card"
+                    >
+                      <Star size={16} fill={isCurrentBookmarked ? "currentColor" : "none"} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flashcard-body-text">
@@ -492,11 +597,31 @@ export default function FlashcardsView({ initialContext }) {
               <div className="flashcard-face flashcard-face-back">
                 <div className="flashcard-badge-row">
                   <span className="flashcard-type-badge"><Lightbulb size={13} /> Answer &amp; Explanation</span>
-                  {currentCardStatus && (
-                    <span className={`flashcard-status-indicator ${currentCardStatus}`}>
-                      {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
-                    </span>
-                  )}
+                  <div className="flashcard-badge-actions">
+                    {currentCardStatus && (
+                      <span className={`flashcard-status-indicator ${currentCardStatus}`}>
+                        {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={`flashcard-audio-btn ${isSpeaking ? "speaking" : ""}`}
+                      onClick={(e) => handleSpeakText(e, currentCard?.back || currentCard?.answer || "")}
+                      title={isSpeaking ? "Stop audio" : "Listen to explanation"}
+                      aria-label="Listen to explanation"
+                    >
+                      {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      className={`flashcard-star-btn ${isCurrentBookmarked ? "active" : ""}`}
+                      onClick={handleToggleBookmark}
+                      title={isCurrentBookmarked ? "Unstar card (B)" : "Star card for review (B)"}
+                      aria-label="Star this card"
+                    >
+                      <Star size={16} fill={isCurrentBookmarked ? "currentColor" : "none"} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flashcard-body-text">
@@ -523,6 +648,7 @@ export default function FlashcardsView({ initialContext }) {
               title="Press 1 on keyboard"
             >
               <RotateCcw size={15} /> Still Learning
+              <kbd className="action-kbd-hint">1</kbd>
             </button>
             <button
               type="button"
@@ -532,6 +658,7 @@ export default function FlashcardsView({ initialContext }) {
               title="Press 2 on keyboard"
             >
               <CheckCircle2 size={15} /> Known
+              <kbd className="action-kbd-hint">2</kbd>
             </button>
           </div>
 
@@ -550,7 +677,7 @@ export default function FlashcardsView({ initialContext }) {
                 type="button"
                 className="secondary-nav-btn"
                 onClick={handleShuffleDeck}
-                title="Shuffle cards randomly"
+                title="Shuffle cards randomly (S)"
               >
                 🔀 Shuffle
               </button>
@@ -558,7 +685,7 @@ export default function FlashcardsView({ initialContext }) {
                 type="button"
                 className="secondary-nav-btn"
                 onClick={handleRestartDeck}
-                title="Restart deck from first card"
+                title="Restart deck from first card (R)"
               >
                 <RotateCw size={14} /> Reset
               </button>
@@ -571,6 +698,22 @@ export default function FlashcardsView({ initialContext }) {
             >
               Next →
             </button>
+          </div>
+
+          {/* Keyboard Shortcuts Legend Bar */}
+          <div className="flashcards-shortcuts-bar">
+            <span className="shortcuts-bar-title">
+              <Keyboard size={14} /> Shortcuts:
+            </span>
+            <div className="shortcuts-chip-group">
+              <span className="shortcut-chip"><kbd>Space</kbd> / <kbd>F</kbd> Flip</span>
+              <span className="shortcut-chip"><kbd>←</kbd> <kbd>→</kbd> Navigate</span>
+              <span className="shortcut-chip"><kbd>1</kbd> Learning</span>
+              <span className="shortcut-chip"><kbd>2</kbd> Known</span>
+              <span className="shortcut-chip"><kbd>B</kbd> Star</span>
+              <span className="shortcut-chip"><kbd>S</kbd> Shuffle</span>
+              <span className="shortcut-chip"><kbd>R</kbd> Reset</span>
+            </div>
           </div>
         </section>
       )}
@@ -597,9 +740,23 @@ export default function FlashcardsView({ initialContext }) {
               <span className="summary-metric-val learning">{learningCount}</span>
               <span className="summary-metric-lbl">Still Learning</span>
             </div>
+            <div className="summary-metric-box">
+              <span className="summary-metric-val star">{bookmarkedCount}</span>
+              <span className="summary-metric-lbl">Starred ⭐</span>
+            </div>
           </div>
 
           <div className="summary-actions-row">
+            {bookmarkedCount > 0 && (
+              <button
+                type="button"
+                className="study-action-btn btn-starred-practice"
+                onClick={handleReviewStarredCards}
+                style={{ maxWidth: "250px" }}
+              >
+                <Star size={15} fill="currentColor" /> Practice {bookmarkedCount} Starred
+              </button>
+            )}
             {learningCount > 0 && (
               <button
                 type="button"
