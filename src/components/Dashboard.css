@@ -1817,6 +1817,134 @@
   cursor: not-allowed;
 }
 
+.chat-input-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-mic-chat {
+  width: 42px;
+  height: 42px;
+  background: var(--color-surface, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--color-card-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary, #94a3b8);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-mic-chat:hover {
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-primary, #ffffff);
+  border-color: var(--color-primary-purple, #8b5cf6);
+  transform: scale(1.05);
+}
+
+.btn-mic-chat.listening {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
+  animation: micPulse 1.4s infinite ease-in-out;
+}
+
+/* Live Voice Recording Banner in Dashboard */
+.chat-view .chat-voice-recording-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-top: 1px solid rgba(239, 68, 68, 0.25);
+  animation: slideUpFade 0.2s ease-out;
+}
+
+.chat-view .voice-recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-view .recording-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: blinkDot 1s infinite ease-in-out;
+}
+
+.chat-view .recording-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f87171;
+  letter-spacing: 0.02em;
+}
+
+.chat-view .voice-waves {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.chat-view .voice-bar {
+  width: 3px;
+  background: #ef4444;
+  border-radius: 3px;
+  animation: waveBar 1s infinite ease-in-out;
+}
+
+.chat-view .voice-bar:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.chat-view .voice-bar:nth-child(2) { height: 14px; animation-delay: 0.25s; }
+.chat-view .voice-bar:nth-child(3) { height: 10px; animation-delay: 0.15s; }
+.chat-view .voice-bar:nth-child(4) { height: 8px; animation-delay: 0.3s; }
+
+.chat-view .btn-stop-voice {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 0.2rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-view .btn-stop-voice:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+
+@keyframes micPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes blinkDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Knowledge Graph View */
 .graph-view {
   width: 100%;
@@ -2337,7 +2465,8 @@
     color: var(--color-text-muted, #71717a);
   }
 
-  .btn-send-chat {
+  .btn-send-chat,
+  .btn-mic-chat {
     width: 38px;
     height: 38px;
     padding: 0;
