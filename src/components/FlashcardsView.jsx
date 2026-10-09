@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX } from "lucide-react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -631,6 +631,7 @@ export default function FlashcardsView({ initialContext }) {
               title="Press 1 on keyboard"
             >
               <RotateCcw size={15} /> Still Learning
+              <kbd className="action-kbd-hint">1</kbd>
             </button>
             <button
               type="button"
@@ -640,6 +641,7 @@ export default function FlashcardsView({ initialContext }) {
               title="Press 2 on keyboard"
             >
               <CheckCircle2 size={15} /> Known
+              <kbd className="action-kbd-hint">2</kbd>
             </button>
           </div>
 
@@ -658,7 +660,7 @@ export default function FlashcardsView({ initialContext }) {
                 type="button"
                 className="secondary-nav-btn"
                 onClick={handleShuffleDeck}
-                title="Shuffle cards randomly"
+                title="Shuffle cards randomly (S)"
               >
                 🔀 Shuffle
               </button>
@@ -666,7 +668,7 @@ export default function FlashcardsView({ initialContext }) {
                 type="button"
                 className="secondary-nav-btn"
                 onClick={handleRestartDeck}
-                title="Restart deck from first card"
+                title="Restart deck from first card (R)"
               >
                 <RotateCw size={14} /> Reset
               </button>
@@ -679,6 +681,22 @@ export default function FlashcardsView({ initialContext }) {
             >
               Next →
             </button>
+          </div>
+
+          {/* Keyboard Shortcuts Legend Bar */}
+          <div className="flashcards-shortcuts-bar">
+            <span className="shortcuts-bar-title">
+              <Keyboard size={14} /> Shortcuts:
+            </span>
+            <div className="shortcuts-chip-group">
+              <span className="shortcut-chip"><kbd>Space</kbd> / <kbd>F</kbd> Flip</span>
+              <span className="shortcut-chip"><kbd>←</kbd> <kbd>→</kbd> Navigate</span>
+              <span className="shortcut-chip"><kbd>1</kbd> Learning</span>
+              <span className="shortcut-chip"><kbd>2</kbd> Known</span>
+              <span className="shortcut-chip"><kbd>B</kbd> Star</span>
+              <span className="shortcut-chip"><kbd>S</kbd> Shuffle</span>
+              <span className="shortcut-chip"><kbd>R</kbd> Reset</span>
+            </div>
           </div>
         </section>
       )}
