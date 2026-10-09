@@ -7,6 +7,24 @@
   position: relative;
   display: inline-block;
   user-select: none;
+  max-width: 100%;
+}
+
+.custom-select-wrapper.full-width {
+  display: block;
+  width: 100%;
+}
+
+.custom-select-wrapper.full-width .custom-select-trigger {
+  width: 100%;
+}
+
+.custom-select-wrapper.full-width .custom-select-menu {
+  width: 100%;
+  max-width: 100%;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
 }
 
 .custom-select-trigger {
@@ -25,6 +43,7 @@
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   min-height: 36px;
   box-sizing: border-box;
+  max-width: 100%;
 }
 
 .custom-select-trigger:hover:not(:disabled),
@@ -43,6 +62,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
+  flex: 1;
 }
 
 .custom-select-arrow {
@@ -62,8 +82,9 @@
   left: 0;
   min-width: 100%;
   max-width: min(320px, calc(100vw - 32px));
-  max-height: 155px; /* Exactly 3-4 items visible! */
+  max-height: 165px; /* Exactly 3-4 items visible */
   overflow-y: auto;  /* Smooth scroll for remaining items */
+  overflow-x: hidden;
   background: var(--color-card-bg, #141226);
   border: 1px solid var(--color-card-border-hover, rgba(124, 58, 237, 0.45));
   border-radius: var(--radius-md, 8px);

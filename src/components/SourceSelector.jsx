@@ -45,7 +45,7 @@ export default function SourceSelector({
         <div className="source-selector-doc">
           <span className="source-selector-label">Choose Document:</span>
           <CustomSelect
-            className="source-selector-doc-select"
+            className="source-selector-doc-select full-width"
             value={selectedDocumentId}
             onChange={onSelectDocument}
             options={options}
