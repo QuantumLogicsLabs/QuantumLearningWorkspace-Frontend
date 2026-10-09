@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
-import { FileText, MessageSquare, Layers, Target, BarChart3, Map, Network, Brain, RefreshCw, BookOpen, X, AlertTriangle, Globe, Clock, CheckCircle2, Search, Send, ChevronDown, RotateCcw, ChevronsLeft, ChevronsRight, Trash2 } from "lucide-react";
+import { FileText, MessageSquare, Layers, Target, BarChart3, Map, Network, Brain, RefreshCw, BookOpen, X, AlertTriangle, Globe, Clock, CheckCircle2, Search, Send, ChevronDown, RotateCcw, ChevronsLeft, ChevronsRight, Trash2, Mic, MicOff } from "lucide-react";
 import ProfileView from "./ProfileView.jsx";
 import QuizView from "./QuizView.jsx";
 import QuizResultsView from "./QuizResultsView.jsx";
@@ -1493,9 +1493,13 @@ function ScopeDropdown({ targetDocument, setTargetDocument, files }) {
 
 function ChatView({ targetDocument, setTargetDocument }) {
   const { token, userEmail, handle401 } = useAuth();
+  const { showToast } = useToast();
   const [files, setFiles] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+  const textBeforeListeningRef = useRef("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeletingHistory, setIsDeletingHistory] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -1668,6 +1672,13 @@ function ChatView({ targetDocument, setTargetDocument }) {
     e?.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    if (recognitionRef.current && isListening) {
+      try {
+        recognitionRef.current.stop();
+      } catch (err) {}
+      setIsListening(false);
+    }
+
     const userMessage = {
       role: "user",
       content: input.trim(),
@@ -1746,6 +1757,81 @@ function ChatView({ targetDocument, setTargetDocument }) {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (err) {}
+      }
+    };
+  }, []);
+
+  const handleToggleListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      showToast("Speech recognition is not supported in this browser. Please try Chrome or Edge.", "warning");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (err) {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+      textBeforeListeningRef.current = input;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        showToast("Listening... Speak your question now", "info");
+      };
+
+      recognition.onresult = (event) => {
+        let currentSessionTranscript = "";
+        for (let i = 0; i < event.results.length; ++i) {
+          currentSessionTranscript += event.results[i][0].transcript;
+        }
+        const base = textBeforeListeningRef.current;
+        const combined = base ? `${base.trim()} ${currentSessionTranscript.trim()}` : currentSessionTranscript.trim();
+        setInput(combined);
+      };
+
+      recognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          showToast("Microphone access was denied. Please allow microphone permissions in browser.", "error");
+        } else if (event.error === "no-speech") {
+          showToast("No speech detected. Mic turned off.", "info");
+        } else if (event.error !== "aborted") {
+          showToast(`Voice input error: ${event.error}`, "warning");
+        }
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      showToast("Could not start voice recognition", "error");
+      setIsListening(false);
     }
   };
 
@@ -1951,6 +2037,29 @@ function ChatView({ targetDocument, setTargetDocument }) {
         )}
       </div>
 
+      {isListening && (
+        <div className="chat-voice-recording-banner">
+          <div className="voice-recording-indicator">
+            <span className="recording-dot"></span>
+            <span className="recording-text">Listening... Speak now</span>
+          </div>
+          <div className="voice-waves">
+            <span className="voice-bar"></span>
+            <span className="voice-bar"></span>
+            <span className="voice-bar"></span>
+            <span className="voice-bar"></span>
+          </div>
+          <button
+            type="button"
+            className="btn-stop-voice"
+            onClick={handleToggleListening}
+            title="Finish speaking"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
       <form className="chat-input-bar" onSubmit={handleSend}>
         <input
           type="text"
@@ -1965,9 +2074,20 @@ function ChatView({ targetDocument, setTargetDocument }) {
           className="chat-text-input"
           disabled={isLoading}
         />
-        <button type="submit" className="btn-send-chat" disabled={!input.trim() || isLoading}>
-          <Send size={16} />
-        </button>
+        <div className="chat-input-btn-group">
+          <button
+            type="button"
+            className={`btn-mic-chat ${isListening ? "listening" : ""}`}
+            onClick={handleToggleListening}
+            title={isListening ? "Stop listening (Voice active)" : "Dictate question (Voice to text)"}
+            aria-label={isListening ? "Stop voice dictation" : "Start voice dictation"}
+          >
+            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+          </button>
+          <button type="submit" className="btn-send-chat" disabled={!input.trim() || isLoading}>
+            <Send size={16} />
+          </button>
+        </div>
       </form>
 
       {/* Delete Chat History Confirmation Modal */}
