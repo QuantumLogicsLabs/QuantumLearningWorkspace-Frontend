@@ -417,6 +417,29 @@ export default function ChatInterface({ onBack }) {
         <div ref={messagesEndRef} />
       </div>
 
+      {isListening && (
+        <div className="chat-voice-recording-banner">
+          <div className="voice-recording-indicator">
+            <span className="recording-dot"></span>
+            <span className="recording-text">Listening... Speak now</span>
+          </div>
+          <div className="voice-waves">
+            <span className="voice-bar"></span>
+            <span className="voice-bar"></span>
+            <span className="voice-bar"></span>
+            <span className="voice-bar"></span>
+          </div>
+          <button
+            type="button"
+            className="btn-stop-voice"
+            onClick={handleToggleListening}
+            title="Finish speaking"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
       <form className="chat-input-form" onSubmit={handleSend}>
         <textarea
           value={input}
