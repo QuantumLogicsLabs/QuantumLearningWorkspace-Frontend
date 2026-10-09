@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard, HelpCircle, Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard, Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -553,7 +553,7 @@ export default function FlashcardsView({ initialContext }) {
               {/* Front Face: Question */}
               <div className="flashcard-face flashcard-face-front">
                 <div className="flashcard-badge-row">
-                  <span className="flashcard-type-badge"><HelpCircle size={13} /> Question</span>
+                  <span className="flashcard-type-badge">Question</span>
                   <div className="flashcard-badge-actions">
                     {currentCardStatus && (
                       <span className={`flashcard-status-indicator ${currentCardStatus}`}>
