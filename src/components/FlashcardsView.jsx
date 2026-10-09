@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star } from "lucide-react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -191,6 +191,36 @@ export default function FlashcardsView({ initialContext }) {
       return next;
     });
   };
+
+  // Text-to-Speech (Audio Pronunciation & Listen)
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const handleSpeakText = (e, text) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!("speechSynthesis" in window)) {
+      showToast("Speech synthesis not supported in this browser", "info");
+      return;
+    }
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  }, [currentIndex, isFlipped]);
 
   // Review Action: "known" or "still_learning"
   const handleReviewAction = async (status) => {
@@ -509,6 +539,15 @@ export default function FlashcardsView({ initialContext }) {
                     )}
                     <button
                       type="button"
+                      className={`flashcard-audio-btn ${isSpeaking ? "speaking" : ""}`}
+                      onClick={(e) => handleSpeakText(e, currentCard?.front || currentCard?.question || "")}
+                      title={isSpeaking ? "Stop audio" : "Listen to question"}
+                      aria-label="Listen to question"
+                    >
+                      {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
+                    <button
+                      type="button"
                       className={`flashcard-star-btn ${isCurrentBookmarked ? "active" : ""}`}
                       onClick={handleToggleBookmark}
                       title={isCurrentBookmarked ? "Unstar card (B)" : "Star card for review (B)"}
@@ -541,6 +580,15 @@ export default function FlashcardsView({ initialContext }) {
                         {currentCardStatus === "known" ? (<><CheckCircle2 size={13} /> Marked Known</>) : (<><RotateCcw size={13} /> Still Learning</>)}
                       </span>
                     )}
+                    <button
+                      type="button"
+                      className={`flashcard-audio-btn ${isSpeaking ? "speaking" : ""}`}
+                      onClick={(e) => handleSpeakText(e, currentCard?.back || currentCard?.answer || "")}
+                      title={isSpeaking ? "Stop audio" : "Listen to explanation"}
+                      aria-label="Listen to explanation"
+                    >
+                      {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
                     <button
                       type="button"
                       className={`flashcard-star-btn ${isCurrentBookmarked ? "active" : ""}`}
