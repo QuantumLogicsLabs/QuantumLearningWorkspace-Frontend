@@ -335,7 +335,7 @@ export default function FlashcardsView({ initialContext }) {
       if (!cards.length || isCompleted) return;
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
 
-      if (e.code === "Space" || e.key === " ") {
+      if (e.code === "Space" || e.key === " " || e.key === "f" || e.key === "F") {
         e.preventDefault();
         setIsFlipped((prev) => !prev);
       } else if (e.key === "ArrowRight") {
@@ -353,9 +353,15 @@ export default function FlashcardsView({ initialContext }) {
       } else if (e.key === "b" || e.key === "B") {
         e.preventDefault();
         handleToggleBookmark();
+      } else if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        handleShuffleDeck();
+      } else if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
+        handleRestartDeck();
       }
     },
-    [cards, currentIndex, isCompleted, handleToggleBookmark]
+    [cards, currentIndex, isCompleted, handleToggleBookmark, handleNextCard, handlePrevCard, handleReviewAction, handleShuffleDeck, handleRestartDeck]
   );
 
   useEffect(() => {
