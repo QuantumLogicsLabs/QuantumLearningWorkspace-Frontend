@@ -672,7 +672,7 @@ export default function FlashcardsView({ initialContext }) {
             >
               ← Previous
             </button>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="secondary-nav-center-group">
               <button
                 type="button"
                 className="secondary-nav-btn"
