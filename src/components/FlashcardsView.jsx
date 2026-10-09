@@ -186,7 +186,7 @@ export default function FlashcardsView({ initialContext }) {
         showToast("Card unstarred", "info");
       } else {
         next.add(cardId);
-        showToast("Card starred for review ⭐", "success");
+        showToast("Card starred for review", "success");
       }
       return next;
     });
@@ -275,7 +275,7 @@ export default function FlashcardsView({ initialContext }) {
       setCurrentIndex((prev) => prev + 1);
     } else {
       setIsCompleted(true);
-      showToast("🎉 Deck completed! Great study session!", "success");
+      showToast("Deck completed successfully! Review your performance below.", "success");
     }
   };
 
@@ -335,7 +335,7 @@ export default function FlashcardsView({ initialContext }) {
       bookmarkedCards.has(c.id || `card-${idx}`)
     );
     if (starredCards.length === 0) {
-      showToast("No cards starred! Star difficult cards using ⭐ or B", "info");
+      showToast("No cards starred! Star difficult cards using the Star button or B", "info");
       return;
     }
     setCards(starredCards);
@@ -343,7 +343,7 @@ export default function FlashcardsView({ initialContext }) {
     setIsFlipped(false);
     setCardReviews({});
     setIsCompleted(false);
-    showToast(`Studying ${starredCards.length} starred flashcards ⭐`, "info");
+    showToast(`Studying ${starredCards.length} starred flashcards`, "info");
   };
 
   // Keyboard Shortcuts (Space/Enter to flip, Left/Right arrows to navigate)
@@ -742,7 +742,7 @@ export default function FlashcardsView({ initialContext }) {
             </div>
             <div className="summary-metric-box">
               <span className="summary-metric-val star">{bookmarkedCount}</span>
-              <span className="summary-metric-lbl">Starred ⭐</span>
+              <span className="summary-metric-lbl">Starred</span>
             </div>
           </div>
 
