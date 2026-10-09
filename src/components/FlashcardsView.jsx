@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard, HelpCircle } from "lucide-react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard, HelpCircle, Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -670,7 +670,7 @@ export default function FlashcardsView({ initialContext }) {
               onClick={handlePrevCard}
               disabled={currentIndex === 0}
             >
-              ← Previous
+              <ChevronLeft size={14} /> Previous
             </button>
             <div className="secondary-nav-center-group">
               <button
@@ -679,7 +679,7 @@ export default function FlashcardsView({ initialContext }) {
                 onClick={handleShuffleDeck}
                 title="Shuffle cards randomly (S)"
               >
-                🔀 Shuffle
+                <Shuffle size={14} /> Shuffle
               </button>
               <button
                 type="button"
@@ -696,7 +696,7 @@ export default function FlashcardsView({ initialContext }) {
               onClick={handleNextCard}
               disabled={currentIndex === cards.length - 1}
             >
-              Next →
+              Next <ChevronRight size={14} />
             </button>
           </div>
 
