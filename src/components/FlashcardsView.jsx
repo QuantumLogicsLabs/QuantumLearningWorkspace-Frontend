@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Lightbulb, Trophy, Star, Volume2, VolumeX, Keyboard } from "lucide-react";
+import { Layers, AlertTriangle, CheckCircle2, RotateCcw, RotateCw, Trophy, Star, Volume2, VolumeX, Keyboard, Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import "./FlashcardsView.css";
@@ -186,7 +186,7 @@ export default function FlashcardsView({ initialContext }) {
         showToast("Card unstarred", "info");
       } else {
         next.add(cardId);
-        showToast("Card starred for review ⭐", "success");
+        showToast("Card starred for review", "success");
       }
       return next;
     });
@@ -275,7 +275,7 @@ export default function FlashcardsView({ initialContext }) {
       setCurrentIndex((prev) => prev + 1);
     } else {
       setIsCompleted(true);
-      showToast("🎉 Deck completed! Great study session!", "success");
+      showToast("Deck completed successfully! Review your performance below.", "success");
     }
   };
 
@@ -335,7 +335,7 @@ export default function FlashcardsView({ initialContext }) {
       bookmarkedCards.has(c.id || `card-${idx}`)
     );
     if (starredCards.length === 0) {
-      showToast("No cards starred! Star difficult cards using ⭐ or B", "info");
+      showToast("No cards starred! Star difficult cards using the Star button or B", "info");
       return;
     }
     setCards(starredCards);
@@ -343,7 +343,7 @@ export default function FlashcardsView({ initialContext }) {
     setIsFlipped(false);
     setCardReviews({});
     setIsCompleted(false);
-    showToast(`Studying ${starredCards.length} starred flashcards ⭐`, "info");
+    showToast(`Studying ${starredCards.length} starred flashcards`, "info");
   };
 
   // Keyboard Shortcuts (Space/Enter to flip, Left/Right arrows to navigate)
@@ -553,7 +553,7 @@ export default function FlashcardsView({ initialContext }) {
               {/* Front Face: Question */}
               <div className="flashcard-face flashcard-face-front">
                 <div className="flashcard-badge-row">
-                  <span className="flashcard-type-badge">❓ Question</span>
+                  <span className="flashcard-type-badge">Question</span>
                   <div className="flashcard-badge-actions">
                     {currentCardStatus && (
                       <span className={`flashcard-status-indicator ${currentCardStatus}`}>
@@ -596,7 +596,7 @@ export default function FlashcardsView({ initialContext }) {
               {/* Back Face: Answer */}
               <div className="flashcard-face flashcard-face-back">
                 <div className="flashcard-badge-row">
-                  <span className="flashcard-type-badge"><Lightbulb size={13} /> Answer &amp; Explanation</span>
+                  <span className="flashcard-type-badge">Answer &amp; Explanation</span>
                   <div className="flashcard-badge-actions">
                     {currentCardStatus && (
                       <span className={`flashcard-status-indicator ${currentCardStatus}`}>
@@ -670,7 +670,7 @@ export default function FlashcardsView({ initialContext }) {
               onClick={handlePrevCard}
               disabled={currentIndex === 0}
             >
-              ← Previous
+              <ChevronLeft size={14} /> Previous
             </button>
             <div className="secondary-nav-center-group">
               <button
@@ -679,7 +679,7 @@ export default function FlashcardsView({ initialContext }) {
                 onClick={handleShuffleDeck}
                 title="Shuffle cards randomly (S)"
               >
-                🔀 Shuffle
+                <Shuffle size={14} /> Shuffle
               </button>
               <button
                 type="button"
@@ -696,7 +696,7 @@ export default function FlashcardsView({ initialContext }) {
               onClick={handleNextCard}
               disabled={currentIndex === cards.length - 1}
             >
-              Next →
+              Next <ChevronRight size={14} />
             </button>
           </div>
 
@@ -742,7 +742,7 @@ export default function FlashcardsView({ initialContext }) {
             </div>
             <div className="summary-metric-box">
               <span className="summary-metric-val star">{bookmarkedCount}</span>
-              <span className="summary-metric-lbl">Starred ⭐</span>
+              <span className="summary-metric-lbl">Starred</span>
             </div>
           </div>
 
