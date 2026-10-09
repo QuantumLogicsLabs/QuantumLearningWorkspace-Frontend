@@ -638,10 +638,10 @@
 
 .summary-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 1rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 540px;
   margin: 0.5rem 0;
 }
 
@@ -668,6 +668,22 @@
 
 .summary-metric-val.learning {
   color: var(--color-warning, #f59e0b);
+}
+
+.summary-metric-val.star {
+  color: #f59e0b;
+}
+
+.study-action-btn.btn-starred-practice {
+  background: #d97706;
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35);
+}
+
+.study-action-btn.btn-starred-practice:hover:not(:disabled) {
+  background: #b45309;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45);
 }
 
 .summary-metric-lbl {

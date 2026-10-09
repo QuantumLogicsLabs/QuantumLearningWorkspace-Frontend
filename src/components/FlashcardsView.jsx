@@ -329,6 +329,23 @@ export default function FlashcardsView({ initialContext }) {
     showToast(`Studying ${weakCards.length} cards needing practice`, "info");
   };
 
+  // Review Only Starred / Bookmarked Cards
+  const handleReviewStarredCards = () => {
+    const starredCards = cards.filter((c, idx) =>
+      bookmarkedCards.has(c.id || `card-${idx}`)
+    );
+    if (starredCards.length === 0) {
+      showToast("No cards starred! Star difficult cards using ⭐ or B", "info");
+      return;
+    }
+    setCards(starredCards);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setCardReviews({});
+    setIsCompleted(false);
+    showToast(`Studying ${starredCards.length} starred flashcards ⭐`, "info");
+  };
+
   // Keyboard Shortcuts (Space/Enter to flip, Left/Right arrows to navigate)
   const handleKeyDown = useCallback(
     (e) => {
@@ -723,9 +740,23 @@ export default function FlashcardsView({ initialContext }) {
               <span className="summary-metric-val learning">{learningCount}</span>
               <span className="summary-metric-lbl">Still Learning</span>
             </div>
+            <div className="summary-metric-box">
+              <span className="summary-metric-val star">{bookmarkedCount}</span>
+              <span className="summary-metric-lbl">Starred ⭐</span>
+            </div>
           </div>
 
           <div className="summary-actions-row">
+            {bookmarkedCount > 0 && (
+              <button
+                type="button"
+                className="study-action-btn btn-starred-practice"
+                onClick={handleReviewStarredCards}
+                style={{ maxWidth: "250px" }}
+              >
+                <Star size={15} fill="currentColor" /> Practice {bookmarkedCount} Starred
+              </button>
+            )}
             {learningCount > 0 && (
               <button
                 type="button"
