@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Brain, FileText, PlayCircle, Globe, CheckCircle2, Inbox, CreditCard, Share2, MessageSquare, Target, Network, Map, Trophy } from "lucide-react";
+import { Brain, FileText, PlayCircle, Globe, CheckCircle2, Inbox, CreditCard, Share2, MessageSquare, Target, Network, Map, Trophy, Menu, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle.jsx";
 import "./LandingPage.css";
 
@@ -203,6 +203,7 @@ function FlashcardDemo() {
 export default function LandingPage({ onNavigate = () => {} }) {
   const canvasRef = useRef(null);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useParticleCanvas(canvasRef);
 
   useEffect(() => {
@@ -214,6 +215,13 @@ export default function LandingPage({ onNavigate = () => {} }) {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleMobileNavClick = (targetId) => {
+    setMobileMenuOpen(false);
+    if (targetId) {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="landing">
@@ -234,8 +242,60 @@ export default function LandingPage({ onNavigate = () => {} }) {
   </div>
   <div className="nav-actions">
     <ThemeToggle />
-    <button className="btn-ghost" onClick={() => onNavigate("login")}>Log in</button>
-    <button className="btn-cta" onClick={() => onNavigate("signup")}>Sign up</button>
+    <button className="btn-ghost desktop-only" onClick={() => onNavigate("login")}>Log in</button>
+    <button className="btn-cta desktop-only" onClick={() => onNavigate("signup")}>Sign up</button>
+    <button
+      className="mobile-menu-btn"
+      onClick={() => setMobileMenuOpen((prev) => !prev)}
+      aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+      aria-expanded={mobileMenuOpen}
+    >
+      {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+    </button>
+  </div>
+
+  {/* Responsive Mobile Drawer */}
+  <div className={`mobile-nav-drawer ${mobileMenuOpen ? "open" : ""}`}>
+    <div className="mobile-nav-links">
+      <a
+        href="#features"
+        onClick={(e) => {
+          e.preventDefault();
+          handleMobileNavClick("features");
+        }}
+      >
+        Features
+      </a>
+      <a
+        href="#how-it-works"
+        onClick={(e) => {
+          e.preventDefault();
+          handleMobileNavClick("how-it-works");
+        }}
+      >
+        How it Works
+      </a>
+    </div>
+    <div className="mobile-nav-actions">
+      <button
+        className="btn-ghost mobile-btn"
+        onClick={() => {
+          setMobileMenuOpen(false);
+          onNavigate("login");
+        }}
+      >
+        Log in
+      </button>
+      <button
+        className="btn-cta mobile-btn"
+        onClick={() => {
+          setMobileMenuOpen(false);
+          onNavigate("signup");
+        }}
+      >
+        Sign up
+      </button>
+    </div>
   </div>
 </nav>
 
