@@ -596,8 +596,23 @@ function DocumentsView({
       return;
     }
 
-    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
-      const msg = "Only PDF files (.pdf) are currently supported.";
+    const ALLOWED_UPLOAD_EXTENSIONS = [
+      ".pdf",
+      ".docx",
+      ".doc",
+      ".txt",
+      ".md",
+      ".csv",
+      ".xlsx",
+      ".xls",
+      ".pptx",
+      ".ppt",
+    ];
+    const fileNameLower = selectedFile.name.toLowerCase();
+    const isSupported = ALLOWED_UPLOAD_EXTENSIONS.some((ext) => fileNameLower.endsWith(ext));
+    if (!isSupported) {
+      const msg =
+        "Supported formats: PDF (.pdf), Word (.docx, .doc), Text (.txt), Markdown (.md), Excel (.csv, .xlsx), PowerPoint (.pptx, .ppt).";
       setUploadMsg(msg);
       setUploadStatus("error");
       showToast(msg, "error");
@@ -719,7 +734,7 @@ function DocumentsView({
             {/* Upload Card */}
       <div className="upload-card">
         <h3>Upload Document</h3>
-        <p className="upload-subtitle">Add PDFs, documents, or lecture notes to your knowledge base</p>
+        <p className="upload-subtitle">Add PDFs, Word docs, spreadsheets, slides, or notes to your knowledge base</p>
         <div className="upload-row">
           <label className="file-input-label">
             <span>{selectedFile ? selectedFile.name : "Choose File"}</span>
@@ -730,7 +745,7 @@ function DocumentsView({
                 setUploadMsg("");
                 setUploadStatus("");
               }}
-              accept=".pdf,.txt,.doc,.docx"
+              accept=".pdf,.docx,.doc,.txt,.md,.csv,.xlsx,.xls,.pptx,.ppt"
               className="file-input-hidden"
             />
           </label>
@@ -823,16 +838,19 @@ function DocumentsView({
               const displayStatus = isProcessing ? "Processing" : "Ready";
 
               const getFileType = (mime, filename) => {
+                const ext = (filename || "").split(".").pop()?.toUpperCase() || "";
+                if (["DOCX", "DOC", "PPTX", "PPT", "XLSX", "XLS", "CSV", "TXT", "MD", "PDF"].includes(ext)) {
+                  return ext;
+                }
                 if (mime && mime.includes("/")) {
                   const subtype = mime.split("/")[1]?.split(".")[0].toUpperCase() || "";
-                  if (subtype.includes("OFFICE") || subtype.includes("WORD") || subtype.includes("OPENXML") || subtype.includes("VND")) {
-                    return "DOCX";
-                  }
+                  if (subtype.includes("WORD") || subtype.includes("OPENXML")) return "DOCX";
+                  if (subtype.includes("PRESENTATION") || subtype.includes("POWERPOINT")) return "PPTX";
+                  if (subtype.includes("SHEET") || subtype.includes("EXCEL") || subtype.includes("CSV")) return "XLSX";
                   if (subtype.length <= 6) return subtype;
                 }
-                const ext = filename.split(".").pop()?.toUpperCase() || "PDF";
-                if (ext.length > 6) return "FILE";
-                return ext;
+                if (ext && ext.length <= 6) return ext;
+                return "FILE";
               };
 
               const currentLoading = actionLoading[file.id];
