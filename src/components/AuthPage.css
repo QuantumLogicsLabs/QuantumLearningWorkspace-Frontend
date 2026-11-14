@@ -797,4 +797,24 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-
+
+
+
+@media (max-width: 480px) {
+  .auth-right {
+    padding: 1.25rem 0.85rem 2rem;
+  }
+  .auth-card {
+    width: 100%;
+  }
+  .auth-social-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .auth-social-btn {
+    width: 100%;
+  }
+  .auth-mobile-header {
+    margin-bottom: 1rem;
+  }
+}
