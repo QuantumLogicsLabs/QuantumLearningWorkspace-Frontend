@@ -1,6 +1,19 @@
 import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 
+const ALLOWED_EXTENSIONS = [
+  ".pdf",
+  ".docx",
+  ".doc",
+  ".txt",
+  ".md",
+  ".csv",
+  ".xlsx",
+  ".xls",
+  ".pptx",
+  ".ppt",
+];
+
 function UploadView({ onUploadSuccess }) {
   const { token, handle401 } = useAuth();
   const fileInputRef = useRef(null);
@@ -23,9 +36,13 @@ function UploadView({ onUploadSuccess }) {
       return;
     }
 
-    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+    const fileNameLower = selectedFile.name.toLowerCase();
+    const isSupported = ALLOWED_EXTENSIONS.some((ext) => fileNameLower.endsWith(ext));
+    if (!isSupported) {
       setStatus("error");
-      setMessage("Only PDF files (.pdf) are currently supported.");
+      setMessage(
+        "Supported formats: PDF (.pdf), Word (.docx, .doc), Text (.txt), Markdown (.md), Excel (.csv, .xlsx), PowerPoint (.pptx, .ppt)."
+      );
       return;
     }
 
@@ -82,16 +99,18 @@ function UploadView({ onUploadSuccess }) {
   return (
     <div className="upload-container">
       <h3>Upload Document</h3>
-      <p className="upload-subtitle">Add PDFs to your knowledge base</p>
+      <p className="upload-subtitle">
+        Add PDFs, Word documents, spreadsheets, slides, or notes to your knowledge base
+      </p>
       
       <div className="upload-controls">
         <label className="file-input-label">
-          <span>{selectedFile ? "Change File" : "Choose PDF"}</span>
+          <span>{selectedFile ? "Change File" : "Choose File"}</span>
           <input 
             type="file" 
             ref={fileInputRef}
             onChange={handleFileChange} 
-            accept=".pdf" 
+            accept=".pdf,.docx,.doc,.txt,.md,.csv,.xlsx,.xls,.pptx,.ppt" 
             className="file-input-hidden"
           />
         </label>
